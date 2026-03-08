@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Assane Down</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#0f172a;
+color:white;
+text-align:center;
+padding:30px;
+}
+
+.logo{
+font-size:60px;
+}
+
+h1{
+font-size:42px;
+margin-bottom:5px;
+}
+
+h2{
+color:#facc15;
+margin-top:0;
+}
+
+input{
+width:360px;
+padding:12px;
+border-radius:10px;
+border:none;
+margin-top:20px;
+}
+
+button{
+padding:12px 20px;
+margin:10px;
+border:none;
+border-radius:10px;
+cursor:pointer;
+font-weight:bold;
+font-size:15px;
+}
+
+#paste{
+background:#2563eb;
+color:white;
+}
+
+#show{
+background:#f59e0b;
+color:white;
+}
+
+#download{
+background:#16a34a;
+color:white;
+display:none;
+}
+
+video{
+margin-top:30px;
+width:520px;
+border-radius:12px;
+display:none;
+}
+
+.box{
+margin-top:40px;
+background:#1e293b;
+padding:20px;
+border-radius:15px;
+width:420px;
+margin-left:auto;
+margin-right:auto;
+}
+
+</style>
+
+</head>
+
+<body>
+
+<div class="logo">🇸🇳</div>
+
+<h1>Lectures vidéos Assane</h1>
+
+<h2>Assane_Moussa_Goudiaby</h2>
+
+<p>appuyer sur coller puis télécharger</p>
+
+<input id="link" placeholder="Colle le lien vidéo ici">
+
+<br>
+
+<button id="paste">📋 Coller</button>
+<button id="show">Afficher la vidéo</button>
+
+<br>
+
+<video id="player" controls></video>
+
+<br>
+
+<button id="download">⬇ Télécharger</button>
+
+<div class="box">
+
+<h3>Fonctionnalités</h3>
+
+<p>✔ Télécharger vidéos</p>
+<p>✔ Regarder vidéos</p>
+<p>✔ Copier / Coller lien</p>
+
+</div>
+
+<script>
+
+document.getElementById("paste").onclick = async () => {
+try{
+const text = await navigator.clipboard.readText();
+document.getElementById("link").value = text;
+}catch{
+alert("Impossible de coller automatiquement");
+}
+};
+
+document.getElementById("show").onclick = () => {
+
+const url = document.getElementById("link").value;
+
+if(!url){
+alert("Colle un lien vidéo");
+return;
+}
+
+const video = document.getElementById("player");
+
+video.src = url;
+video.style.display = "block";
+
+const btn = document.getElementById("download");
+
+btn.style.display="inline-block";
+
+btn.onclick = () => {
+window.location="/download?url="+encodeURIComponent(url);
+}
+
+};
+
+</script>
+
+</body>
+</html>

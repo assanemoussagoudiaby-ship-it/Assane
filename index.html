@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>converti.sn</title>
+
+<style>
+body {
+    font-family: Arial;
+    margin: 0;
+    background: #eef2f3;
+    text-align: center;
+}
+
+.dark {
+    background: #1e1e1e;
+    color: white;
+}
+
+.header {
+    background: green;
+    color: white;
+    padding: 15px;
+    font-size: 20px;
+}
+
+.container {
+    width: 350px;
+    margin: 20px auto;
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.dark .container {
+    background: #2c2c2c;
+}
+
+input, button {
+    width: 90%;
+    padding: 10px;
+    margin: 10px;
+}
+
+button {
+    background: green;
+    color: white;
+    border: none;
+}
+
+.country-list {
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #ccc;
+}
+
+.country {
+    display: flex;
+    align-items: center;
+    padding: 8px;
+    cursor: pointer;
+}
+
+.country img {
+    width: 25px;
+    margin-right: 10px;
+}
+
+.selected {
+    background: #ddd;
+}
+
+.dark .selected {
+    background: #555;
+}
+
+.result {
+    margin-top: 15px;
+    font-weight: bold;
+}
+</style>
+
+</head>
+
+<body>
+
+<div class="header">🇸🇳 converti.sn - Assane</div>
+
+<div class="container">
+
+<button onclick="toggleTheme()">🌙 / ☀️ Thème</button>
+
+<input type="number" id="amount" placeholder="Montant">
+
+<button onclick="toggleList('fromList')">Pays départ</button>
+<div id="fromList" class="country-list" style="display:none"></div>
+
+<button onclick="toggleList('toList')">Pays arrivée</button>
+<div id="toList" class="country-list" style="display:none"></div>
+
+<button id="convertBtn">🔄 Convertir</button>
+
+<div id="result" class="result"></div>
+
+</div>
+
+<script>
+
+/* 🌙 thème */
+function toggleTheme(){
+    document.body.classList.toggle("dark");
+}
+
+/* afficher/masquer liste */
+function toggleList(id){
+    let el = document.getElementById(id);
+    el.style.display = (el.style.display === "none") ? "block" : "none";
+}
+
+let fromCurrency = "";
+let toCurrency = "";
+let selectedFrom = null;
+let selectedTo = null;
+
+/* sélection pays */
+function select(currency, el, isFrom){
+
+    if(isFrom && selectedFrom) selectedFrom.classList.remove("selected");
+    if(!isFrom && selectedTo) selectedTo.classList.remove("selected");
+
+    el.classList.add("selected");
+
+    if(isFrom){
+        fromCurrency = currency;
+        selectedFrom = el;
+    } else {
+        toCurrency = currency;
+        selectedTo = el;
+    }
+}
+
+/* 🌍 TES 80 PAYS */
+const countries = [
+/* AFRIQUE */
+{name:"Sénégal", currency:"XOF", flag:"https://flagcdn.com/sn.svg"},
+{name:"Nigeria", currency:"NGN", flag:"https://flagcdn.com/ng.svg"},
+{name:"Kenya", currency:"KES", flag:"https://flagcdn.com/ke.svg"},
+{name:"Ghana", currency:"GHS", flag:"https://flagcdn.com/gh.svg"},
+{name:"Afrique du Sud", currency:"ZAR", flag:"https://flagcdn.com/za.svg"},
+{name:"Maroc", currency:"MAD", flag:"https://flagcdn.com/ma.svg"},
+{name:"Algérie", currency:"DZD", flag:"https://flagcdn.com/dz.svg"},
+{name:"Tunisie", currency:"TND", flag:"https://flagcdn.com/tn.svg"},
+{name:"Égypte", currency:"EGP", flag:"https://flagcdn.com/eg.svg"},
+{name:"Éthiopie", currency:"ETB", flag:"https://flagcdn.com/et.svg"},
+{name:"Ouganda", currency:"UGX", flag:"https://flagcdn.com/ug.svg"},
+{name:"Tanzanie", currency:"TZS", flag:"https://flagcdn.com/tz.svg"},
+{name:"Rwanda", currency:"RWF", flag:"https://flagcdn.com/rw.svg"},
+{name:"Mali", currency:"XOF", flag:"https://flagcdn.com/ml.svg"},
+{name:"Burkina Faso", currency:"XOF", flag:"https://flagcdn.com/bf.svg"},
+{name:"Cameroun", currency:"XAF", flag:"https://flagcdn.com/cm.svg"},
+{name:"Angola", currency:"AOA", flag:"https://flagcdn.com/ao.svg"},
+{name:"Mozambique", currency:"MZN", flag:"https://flagcdn.com/mz.svg"},
+{name:"Soudan", currency:"SDG", flag:"https://flagcdn.com/sd.svg"},
+{name:"Côte d'Ivoire", currency:"XOF", flag:"https://flagcdn.com/ci.svg"},
+
+/* EUROPE */
+{name:"France", currency:"EUR", flag:"https://flagcdn.com/fr.svg"},
+{name:"Allemagne", currency:"EUR", flag:"https://flagcdn.com/de.svg"},
+{name:"Italie", currency:"EUR", flag:"https://flagcdn.com/it.svg"},
+{name:"Espagne", currency:"EUR", flag:"https://flagcdn.com/es.svg"},
+{name:"Portugal", currency:"EUR", flag:"https://flagcdn.com/pt.svg"},
+{name:"Royaume-Uni", currency:"GBP", flag:"https://flagcdn.com/gb.svg"},
+{name:"Suisse", currency:"CHF", flag:"https://flagcdn.com/ch.svg"},
+{name:"Belgique", currency:"EUR", flag:"https://flagcdn.com/be.svg"},
+{name:"Pays-Bas", currency:"EUR", flag:"https://flagcdn.com/nl.svg"},
+{name:"Suède", currency:"SEK", flag:"https://flagcdn.com/se.svg"},
+{name:"Norvège", currency:"NOK", flag:"https://flagcdn.com/no.svg"},
+{name:"Danemark", currency:"DKK", flag:"https://flagcdn.com/dk.svg"},
+{name:"Pologne", currency:"PLN", flag:"https://flagcdn.com/pl.svg"},
+{name:"Grèce", currency:"EUR", flag:"https://flagcdn.com/gr.svg"},
+{name:"Irlande", currency:"EUR", flag:"https://flagcdn.com/ie.svg"},
+{name:"Autriche", currency:"EUR", flag:"https://flagcdn.com/at.svg"},
+{name:"Finlande", currency:"EUR", flag:"https://flagcdn.com/fi.svg"},
+{name:"Ukraine", currency:"UAH", flag:"https://flagcdn.com/ua.svg"},
+{name:"Turquie", currency:"TRY", flag:"https://flagcdn.com/tr.svg"},
+{name:"Russie", currency:"RUB", flag:"https://flagcdn.com/ru.svg"},
+
+/* AMERIQUE */
+{name:"USA", currency:"USD", flag:"https://flagcdn.com/us.svg"},
+{name:"Canada", currency:"CAD", flag:"https://flagcdn.com/ca.svg"},
+{name:"Mexique", currency:"MXN", flag:"https://flagcdn.com/mx.svg"},
+{name:"Brésil", currency:"BRL", flag:"https://flagcdn.com/br.svg"},
+{name:"Argentine", currency:"ARS", flag:"https://flagcdn.com/ar.svg"},
+{name:"Colombie", currency:"COP", flag:"https://flagcdn.com/co.svg"},
+{name:"Chili", currency:"CLP", flag:"https://flagcdn.com/cl.svg"},
+{name:"Pérou", currency:"PEN", flag:"https://flagcdn.com/pe.svg"},
+{name:"Bolivie", currency:"BOB", flag:"https://flagcdn.com/bo.svg"},
+{name:"Paraguay", currency:"PYG", flag:"https://flagcdn.com/py.svg"},
+{name:"Uruguay", currency:"UYU", flag:"https://flagcdn.com/uy.svg"},
+{name:"Cuba", currency:"CUP", flag:"https://flagcdn.com/cu.svg"},
+{name:"Venezuela", currency:"VES", flag:"https://flagcdn.com/ve.svg"},
+{name:"Équateur", currency:"USD", flag:"https://flagcdn.com/ec.svg"},
+{name:"Panama", currency:"PAB", flag:"https://flagcdn.com/pa.svg"},
+{name:"Guatemala", currency:"GTQ", flag:"https://flagcdn.com/gt.svg"},
+{name:"Honduras", currency:"HNL", flag:"https://flagcdn.com/hn.svg"},
+{name:"Nicaragua", currency:"NIO", flag:"https://flagcdn.com/ni.svg"},
+{name:"Jamaïque", currency:"JMD", flag:"https://flagcdn.com/jm.svg"},
+{name:"Dominicaine", currency:"DOP", flag:"https://flagcdn.com/do.svg"},
+
+/* ASIE */
+{name:"Chine", currency:"CNY", flag:"https://flagcdn.com/cn.svg"},
+{name:"Japon", currency:"JPY", flag:"https://flagcdn.com/jp.svg"},
+{name:"Inde", currency:"INR", flag:"https://flagcdn.com/in.svg"},
+{name:"Corée", currency:"KRW", flag:"https://flagcdn.com/kr.svg"},
+{name:"Indonésie", currency:"IDR", flag:"https://flagcdn.com/id.svg"},
+{name:"Thaïlande", currency:"THB", flag:"https://flagcdn.com/th.svg"},
+{name:"Vietnam", currency:"VND", flag:"https://flagcdn.com/vn.svg"},
+{name:"Malaisie", currency:"MYR", flag:"https://flagcdn.com/my.svg"},
+{name:"Philippines", currency:"PHP", flag:"https://flagcdn.com/ph.svg"},
+{name:"Singapour", currency:"SGD", flag:"https://flagcdn.com/sg.svg"},
+{name:"Pakistan", currency:"PKR", flag:"https://flagcdn.com/pk.svg"},
+{name:"Bangladesh", currency:"BDT", flag:"https://flagcdn.com/bd.svg"},
+{name:"Sri Lanka", currency:"LKR", flag:"https://flagcdn.com/lk.svg"},
+{name:"Qatar", currency:"QAR", flag:"https://flagcdn.com/qa.svg"},
+{name:"Koweït", currency:"KWD", flag:"https://flagcdn.com/kw.svg"},
+{name:"Arabie Saoudite", currency:"SAR", flag:"https://flagcdn.com/sa.svg"},
+{name:"Émirats", currency:"AED", flag:"https://flagcdn.com/ae.svg"},
+{name:"Israël", currency:"ILS", flag:"https://flagcdn.com/il.svg"},
+{name:"Kazakhstan", currency:"KZT", flag:"https://flagcdn.com/kz.svg"},
+{name:"Turquie", currency:"TRY", flag:"https://flagcdn.com/tr.svg"}
+];
+
+/* afficher */
+function show(){
+    let from = document.getElementById("fromList");
+    let to = document.getElementById("toList");
+
+    countries.forEach(c=>{
+        let d1 = document.createElement("div");
+        let d2 = document.createElement("div");
+
+        d1.className = "country";
+        d2.className = "country";
+
+        d1.innerHTML = `<img src="${c.flag}"> ${c.name}`;
+        d2.innerHTML = `<img src="${c.flag}"> ${c.name}`;
+
+        d1.onclick = ()=>select(c.currency, d1, true);
+        d2.onclick = ()=>select(c.currency, d2, false);
+
+        from.appendChild(d1);
+        to.appendChild(d2);
+    });
+}
+
+show();
+
+/* conversion */
+document.getElementById("convertBtn").addEventListener("click", ()=>{
+    let amount = document.getElementById("amount").value;
+
+    if(!fromCurrency || !toCurrency){
+        result.innerText = "Choisis les pays";
+        return;
+    }
+
+    let rates = {
+        USD:1, EUR:1.09, GBP:1.27, XOF:0.0016, NGN:0.0007, KES:0.0067
+    };
+
+    let res = (amount * (rates[fromCurrency]||1)) / (rates[toCurrency]||1);
+
+    result.innerText = res.toFixed(2) + " " + toCurrency;
+});
+
+</script>
+
+</body>
+</html>

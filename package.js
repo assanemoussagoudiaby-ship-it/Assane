@@ -1,0 +1,15 @@
+{
+  "name": "assane-downloader",
+  "version": "1.0.0",
+  "description": "Mini SnapTik local",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "node-fetch": "^2.6.7"
+  },
+  "author": "Assane",
+  "license": "ISC"
+}

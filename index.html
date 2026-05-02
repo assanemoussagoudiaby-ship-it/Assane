@@ -2,155 +2,135 @@
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
-<title>Assane Down</title>
+<title>Assane Down Ultra Pro</title>
 
 <style>
-
 body{
-font-family:Arial;
-background:#0f172a;
-color:white;
-text-align:center;
-padding:30px;
-}
-
-.logo{
-font-size:60px;
+    font-family: Arial;
+    background: #0a0615;
+    color: white;
+    text-align: center;
+    padding: 20px;
 }
 
 h1{
-font-size:42px;
-margin-bottom:5px;
-}
-
-h2{
-color:#facc15;
-margin-top:0;
+    font-size: 38px;
 }
 
 input{
-width:360px;
-padding:12px;
-border-radius:10px;
-border:none;
-margin-top:20px;
+    width: 80%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    margin-top: 15px;
 }
 
 button{
-padding:12px 20px;
-margin:10px;
-border:none;
-border-radius:10px;
-cursor:pointer;
-font-weight:bold;
-font-size:15px;
+    padding: 12px;
+    margin: 8px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: bold;
 }
 
-#paste{
-background:#2563eb;
-color:white;
-}
-
-#show{
-background:#f59e0b;
-color:white;
-}
-
-#download{
-background:#16a34a;
-color:white;
-display:none;
-}
+#download{ background: green; color: white; }
+#historyBtn{ background: blue; color: white; }
+#openBtn{ background: orange; color: black; }
 
 video{
-margin-top:30px;
-width:520px;
-border-radius:12px;
-display:none;
+    width: 90%;
+    margin-top: 20px;
+    display: none;
+    border-radius: 12px;
 }
 
 .box{
-margin-top:40px;
-background:#1e293b;
-padding:20px;
-border-radius:15px;
-width:420px;
-margin-left:auto;
-margin-right:auto;
+    margin-top: 20px;
+    background: #1e1b2e;
+    padding: 15px;
+    border-radius: 10px;
 }
-
 </style>
 
 </head>
 
 <body>
 
-<div class="logo">🇸🇳</div>
+<h1>🇸🇳 Assane Down Ultra Pro</h1>
 
-<h1>Lectures vidéos Assane</h1>
-
-<h2>Assane_Moussa_Goudiaby</h2>
-
-<p>appuyer sur coller puis télécharger</p>
-
-<input id="link" placeholder="Colle le lien vidéo ici">
-
-<br>
-
-<button id="paste">📋 Coller</button>
-<button id="show">Afficher la vidéo</button>
-
-<br>
-
-<video id="player" controls></video>
+<input id="link" placeholder="Colle un lien YouTube ou MP4">
 
 <br>
 
 <button id="download">⬇ Télécharger</button>
+<button id="openBtn">▶ Lire</button>
+<button id="historyBtn">📜 Historique</button>
 
-<div class="box">
+<video id="player" controls></video>
 
-<h3>Fonctionnalités</h3>
-
-<p>✔ Télécharger vidéos</p>
-<p>✔ Regarder vidéos</p>
-<p>✔ Copier / Coller lien</p>
-
-</div>
+<div class="box" id="historyBox"></div>
 
 <script>
 
-document.getElementById("paste").onclick = async () => {
-try{
-const text = await navigator.clipboard.readText();
-document.getElementById("link").value = text;
-}catch{
-alert("Impossible de coller automatiquement");
-}
+const SERVER = "http://localhost:3000";
+
+const input = document.getElementById("link");
+const video = document.getElementById("player");
+const historyBox = document.getElementById("historyBox");
+
+/*
+========================
+▶ LECTURE VIDÉO
+========================
+*/
+document.getElementById("openBtn").onclick = () => {
+
+    const url = input.value.trim();
+
+    if (!url) return alert("Lien vide");
+
+    video.src = url;
+    video.style.display = "block";
 };
 
-document.getElementById("show").onclick = () => {
+/*
+========================
+⬇ DOWNLOAD
+========================
+*/
+document.getElementById("download").onclick = () => {
 
-const url = document.getElementById("link").value;
+    const url = input.value.trim();
 
-if(!url){
-alert("Colle un lien vidéo");
-return;
-}
+    if (!url) return alert("Lien vide");
 
-const video = document.getElementById("player");
+    window.location.href =
+        SERVER + "/download?url=" + encodeURIComponent(url);
+};
 
-video.src = url;
-video.style.display = "block";
+/*
+========================
+📜 HISTORIQUE
+========================
+*/
+document.getElementById("historyBtn").onclick = async () => {
 
-const btn = document.getElementById("download");
+    const res = await fetch(SERVER + "/history");
+    const data = await res.json();
 
-btn.style.display="inline-block";
+    historyBox.innerHTML = "<h3>Historique</h3>";
 
-btn.onclick = () => {
-window.location="/download?url="+encodeURIComponent(url);
-}
-
+    data.forEach(v => {
+        historyBox.innerHTML += `
+            <p>
+            📹 ${v.type.toUpperCase()}<br>
+            🔗 ${v.url}<br>
+            🕒 ${v.date}
+            </p>
+            <hr>
+        `;
+    });
 };
 
 </script>

@@ -2,216 +2,195 @@
 <html lang="fr">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <!-- TITRE -->
-    <title>AssaneDown</title>
+    <meta charset="UTF-8" />
+
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0" />
+
+    <!-- NOM ONGLET -->
+    <title>
+        Assane Moussa Goudiaby 🇸🇳
+    </title>
 
     <!-- LOGO ONGLET -->
-    <link rel="icon" type="image/png" href="logo.png">
+    <link rel="icon"
+          type="image/png"
+          href="logo.png" />
 
     <!-- TAILWIND -->
     <script src="https://cdn.tailwindcss.com"></script>
 
+    <!-- STYLE -->
     <style>
 
         body{
             background:#020617;
-            overflow-x:hidden;
         }
 
         .glass{
-            background: rgba(15,23,42,0.8);
-            backdrop-filter: blur(10px);
+            background:rgba(15,23,42,0.95);
+            backdrop-filter:blur(10px);
         }
 
-        .neon{
-            box-shadow:0 0 20px #06b6d4;
+        .scrollbar::-webkit-scrollbar{
+            width:6px;
         }
 
-        .history-scroll{
-            max-height:300px;
-            overflow-y:auto;
+        .scrollbar::-webkit-scrollbar-thumb{
+            background:#475569;
+            border-radius:20px;
         }
 
     </style>
 
 </head>
 
-<body class="text-white min-h-screen flex items-center justify-center p-5">
+<body class="text-white min-h-screen flex justify-center items-center p-4">
 
-    <!-- AUDIO -->
-    <audio id="welcomeSound" autoplay>
-        <source src="audio/welcome.mp3" type="audio/mp3">
-    </audio>
-
-    <!-- CONTAINER -->
-    <div class="glass w-full max-w-2xl rounded-3xl p-6 neon border border-cyan-500">
+    <!-- APP -->
+    <div class="glass w-full max-w-2xl rounded-3xl shadow-2xl border border-slate-700 p-6">
 
         <!-- HEADER -->
-        <div class="flex flex-col items-center">
+        <div class="text-center mb-6">
+
+            <!-- DRAPEAU -->
+            <div class="text-6xl mb-3">
+                🇸🇳
+            </div>
 
             <!-- LOGO -->
             <img
                 src="logo.png"
                 alt="AssaneDown"
-                class="w-32 h-32 rounded-3xl object-cover border-4 border-cyan-400 shadow-2xl mb-4">
+                class="w-56 mx-auto rounded-2xl shadow-2xl mb-4">
 
             <!-- TITRE -->
-            <h1 class="text-5xl font-bold text-cyan-400 mb-2">
+            <h1 class="text-5xl font-black text-cyan-400">
                 AssaneDown
             </h1>
 
-            <p class="text-slate-400 text-center">
-                Smart Video Downloader
+            <p class="text-slate-400 mt-2 text-lg">
+                Téléchargement intelligent de vidéos
             </p>
 
         </div>
 
-        <!-- IA -->
-        <div class="bg-slate-800 mt-6 rounded-2xl p-4 border border-slate-700">
+        <!-- IA ASSANE -->
+        <div class="bg-slate-800 border border-slate-700 rounded-2xl p-4 mb-5">
 
-            <div class="flex items-center gap-3 mb-2">
+            <h2 class="text-cyan-300 font-bold mb-2 text-xl">
+                🤖 IA Assane
+            </h2>
 
-                <div class="w-12 h-12 rounded-full bg-cyan-500 flex items-center justify-center text-black font-bold">
-                    AI
-                </div>
-
-                <div>
-                    <h2 class="font-bold text-cyan-300">
-                        🤖 IA Assane
-                    </h2>
-
-                    <p class="text-sm text-slate-400">
-                        Assistant intelligent
-                    </p>
-                </div>
-
-            </div>
-
-            <p
-                id="aiMessage"
-                class="text-slate-200 text-sm">
-                👋 Bienvenue sur l'application Assane Moussa Goudiaby
+            <p id="aiMessage"
+               class="text-slate-200">
+                Bienvenue sur AssaneDown 👋
             </p>
 
         </div>
 
         <!-- INPUT -->
-        <div class="mt-6">
+        <div class="space-y-4">
 
             <input
-                id="videoUrl"
                 type="text"
-                placeholder="Collez un lien YouTube, TikTok, Facebook..."
-                class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-700 outline-none text-white">
+                id="videoUrl"
+                placeholder="Collez un lien YouTube ou TikTok..."
+                class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-700 outline-none focus:border-cyan-400">
 
-        </div>
+            <!-- BOUTONS -->
+            <div class="grid grid-cols-2 gap-3">
 
-        <!-- BOUTONS -->
-        <div class="grid grid-cols-2 gap-4 mt-5">
-
-            <button
-                id="pasteBtn"
-                class="bg-slate-700 hover:bg-slate-600 transition-all p-4 rounded-2xl font-bold">
-                📋 Coller
-            </button>
-
-            <button
-                id="downloadBtn"
-                class="bg-cyan-500 hover:bg-cyan-400 text-black transition-all p-4 rounded-2xl font-bold">
-                📥 Télécharger
-            </button>
-
-        </div>
-
-        <!-- ACTIONS -->
-        <div class="grid grid-cols-2 gap-4 mt-4">
-
-            <button
-                onclick="toggleHistory()"
-                class="bg-purple-600 hover:bg-purple-500 transition-all p-3 rounded-2xl font-bold">
-                👁 Historique
-            </button>
-
-            <button
-                onclick="openFolder()"
-                class="bg-emerald-600 hover:bg-emerald-500 transition-all p-3 rounded-2xl font-bold">
-                📁 Downloads
-            </button>
-
-        </div>
-
-        <!-- STATUS -->
-        <div class="mt-5">
-
-            <div
-                id="status"
-                class="bg-slate-900 border border-slate-700 rounded-2xl p-4 text-center font-bold text-cyan-300">
-                🚀 AssaneDown prêt
-            </div>
-
-        </div>
-
-        <!-- VIDEO PLAYER -->
-        <div class="mt-6">
-
-            <video
-                id="videoPlayer"
-                controls
-                class="w-full rounded-2xl hidden border border-slate-700">
-            </video>
-
-        </div>
-
-        <!-- HISTORIQUE -->
-        <div
-            id="historyBox"
-            class="mt-6 bg-slate-900 rounded-2xl p-4 border border-slate-700 history-scroll">
-
-            <div class="flex items-center justify-between mb-4">
-
-                <h2 class="text-2xl font-bold text-cyan-300">
-                    📁 Historique
-                </h2>
-
+                <!-- COLLER -->
                 <button
-                    onclick="toggleHistory()"
-                    class="bg-red-500 hover:bg-red-400 px-4 py-2 rounded-xl font-bold text-black">
-                    ❌ Masquer
+                    id="pasteBtn"
+                    class="bg-slate-700 hover:bg-slate-600 p-4 rounded-2xl font-bold">
+
+                    📋 Coller
+
+                </button>
+
+                <!-- EFFACER -->
+                <button
+                    id="clearBtn"
+                    class="bg-red-500 hover:bg-red-400 text-black p-4 rounded-2xl font-bold">
+
+                    ❌ Effacer
+
+                </button>
+
+                <!-- TELECHARGER -->
+                <button
+                    id="downloadBtn"
+                    class="bg-cyan-500 hover:bg-cyan-400 text-black p-4 rounded-2xl font-black">
+
+                    📥 Télécharger
+
+                </button>
+
+                <!-- DOSSIER -->
+                <button
+                    id="openFolderBtn"
+                    class="bg-green-500 hover:bg-green-400 text-black p-4 rounded-2xl font-black">
+
+                    📁 Downloads
+
                 </button>
 
             </div>
 
-            <!-- VIDEOS -->
-            <div id="historyList">
+            <!-- STATUS -->
+            <div id="status"
+                 class="text-center text-lg font-bold mt-2">
+            </div>
 
-                <div class="bg-slate-800 p-4 rounded-2xl mb-3">
+        </div>
 
-                    <p class="font-bold">
-                        🎥 Aucune vidéo téléchargée
-                    </p>
+        <!-- HISTORIQUE -->
+        <div class="mt-8">
 
-                    <p class="text-sm text-slate-400">
-                        Les vidéos apparaîtront ici
-                    </p>
+            <div class="flex justify-between items-center mb-3">
 
-                </div>
+                <h2 class="text-2xl font-bold text-cyan-300">
 
+                    🕘 Historique
+
+                </h2>
+
+                <!-- MASQUER -->
+                <button
+                    id="toggleHistory"
+                    class="bg-slate-700 px-4 py-2 rounded-xl">
+
+                    Masquer
+
+                </button>
+
+            </div>
+
+            <!-- CONTAINER -->
+            <div id="historyContainer"
+                 class="space-y-3 max-h-[300px] overflow-y-auto scrollbar">
             </div>
 
         </div>
 
         <!-- FOOTER -->
-        <div class="mt-6 text-center">
+        <div class="mt-8 border-t border-slate-700 pt-5 text-center text-slate-400">
 
-            <p class="text-slate-500 text-sm">
-                © 2026 AssaneDown — By Assane Moussa Goudiaby
+            <p class="mb-2">
+
+                🇸🇳 AssaneDown permet de télécharger,
+                lire et gérer des vidéos depuis
+                YouTube, TikTok et plusieurs plateformes.
+
             </p>
 
-            <p class="text-cyan-400 text-xs mt-1">
-                assanedown.com
+            <p>
+
+                Créé par Assane Moussa Goudiaby 🔥
+
             </p>
 
         </div>
@@ -219,8 +198,449 @@
     </div>
 
     <!-- SCRIPT -->
-    <script src="script.js"></script>
+    <script>
+
+        /* =========================================
+           API RENDER
+        ========================================= */
+
+        const API =
+            "https://assanedown-oefv.onrender.com";
+
+        /* =========================================
+           ELEMENTS
+        ========================================= */
+
+        const videoUrl =
+            document.getElementById("videoUrl");
+
+        const pasteBtn =
+            document.getElementById("pasteBtn");
+
+        const clearBtn =
+            document.getElementById("clearBtn");
+
+        const downloadBtn =
+            document.getElementById("downloadBtn");
+
+        const openFolderBtn =
+            document.getElementById("openFolderBtn");
+
+        const historyContainer =
+            document.getElementById("historyContainer");
+
+        const status =
+            document.getElementById("status");
+
+        const aiMessage =
+            document.getElementById("aiMessage");
+
+        const toggleHistory =
+            document.getElementById("toggleHistory");
+
+        let hidden = false;
+
+        /* =========================================
+           IA ASSANE
+        ========================================= */
+
+        function ai(text){
+
+            aiMessage.textContent = text;
+
+        }
+
+        /* =========================================
+           STATUS
+        ========================================= */
+
+        function show(text,color){
+
+            status.textContent = text;
+
+            status.style.color = color;
+
+        }
+
+        /* =========================================
+           BIENVENUE
+        ========================================= */
+
+        window.addEventListener("load",()=>{
+
+            const speech =
+                new SpeechSynthesisUtterance(
+                    "Bienvenue sur AssaneDown"
+                );
+
+            speech.lang = "fr-FR";
+
+            speechSynthesis.speak(speech);
+
+            ai(
+                "👋 Bienvenue sur AssaneDown. Collez un lien puis cliquez sur télécharger."
+            );
+
+            loadHistory();
+
+        });
+
+        /* =========================================
+           COLLER
+        ========================================= */
+
+        pasteBtn.addEventListener(
+            "click",
+            async ()=>{
+
+                try{
+
+                    const text =
+                        await navigator
+                        .clipboard
+                        .readText();
+
+                    videoUrl.value = text;
+
+                    ai(
+                        "✔ Lien collé avec succès."
+                    );
+
+                    show(
+                        "Lien collé ✔",
+                        "lightgreen"
+                    );
+
+                }catch{
+
+                    show(
+                        "Erreur clipboard ❌",
+                        "red"
+                    );
+
+                }
+
+            }
+        );
+
+        /* =========================================
+           EFFACER
+        ========================================= */
+
+        clearBtn.addEventListener(
+            "click",
+            ()=>{
+
+                videoUrl.value = "";
+
+                ai(
+                    "🗑 Champ effacé."
+                );
+
+                show(
+                    "Lien supprimé ✔",
+                    "orange"
+                );
+
+            }
+        );
+
+        /* =========================================
+           TELECHARGER
+        ========================================= */
+
+        downloadBtn.addEventListener(
+            "click",
+            async ()=>{
+
+                const url =
+                    videoUrl.value.trim();
+
+                if(!url){
+
+                    ai(
+                        "⚠ Ajoute un lien vidéo."
+                    );
+
+                    return show(
+                        "Lien manquant ❌",
+                        "red"
+                    );
+
+                }
+
+                ai(
+                    "⏳ Téléchargement en cours..."
+                );
+
+                show(
+                    "Téléchargement...",
+                    "orange"
+                );
+
+                try{
+
+                    const res =
+                        await fetch(
+                            API + "/download",
+                            {
+                                method:"POST",
+
+                                headers:{
+                                    "Content-Type":
+                                    "application/json"
+                                },
+
+                                body:JSON.stringify({
+                                    url
+                                })
+                            }
+                        );
+
+                    const data =
+                        await res.json();
+
+                    if(data.success){
+
+                        ai(
+                            "🎉 Vidéo téléchargée avec succès."
+                        );
+
+                        show(
+                            data.message,
+                            "lightgreen"
+                        );
+
+                        videoUrl.value = "";
+
+                        loadHistory();
+
+                    }else{
+
+                        ai(
+                            "❌ Une erreur est survenue."
+                        );
+
+                        show(
+                            data.message,
+                            "red"
+                        );
+
+                    }
+
+                }catch(err){
+
+                    console.log(err);
+
+                    ai(
+                        "❌ Serveur inaccessible."
+                    );
+
+                    show(
+                        "Serveur inaccessible ❌",
+                        "red"
+                    );
+
+                }
+
+            }
+        );
+
+        /* =========================================
+           OUVRIR DOSSIER
+        ========================================= */
+
+        openFolderBtn.addEventListener(
+            "click",
+            ()=>{
+
+                window.open(
+                    API + "/open-folder"
+                );
+
+            }
+        );
+
+        /* =========================================
+           HISTORIQUE
+        ========================================= */
+
+        async function loadHistory(){
+
+            try{
+
+                const res =
+                    await fetch(
+                        API + "/history"
+                    );
+
+                const data =
+                    await res.json();
+
+                historyContainer.innerHTML = "";
+
+                data.reverse().forEach(item=>{
+
+                    const div =
+                        document.createElement("div");
+
+                    div.className =
+                        "bg-slate-800 border border-slate-700 p-4 rounded-2xl";
+
+                    div.innerHTML = `
+
+                        <div class="mb-3">
+
+                            <h3 class="font-bold break-all">
+
+                                ${item.name}
+
+                            </h3>
+
+                            <p class="text-slate-400 text-sm">
+
+                                Taille :
+                                ${item.size || "?"}
+
+                            </p>
+
+                            <p class="text-slate-400 text-sm">
+
+                                ${item.date || ""}
+
+                            </p>
+
+                        </div>
+
+                        <div class="grid grid-cols-3 gap-2">
+
+                            <button
+                                onclick="playVideo('${item.name}')"
+                                class="bg-cyan-500 hover:bg-cyan-400 text-black rounded-xl p-2 font-bold">
+
+                                ▶ Lire
+
+                            </button>
+
+                            <button
+                                onclick="saveVideo('${item.url}')"
+                                class="bg-green-500 hover:bg-green-400 text-black rounded-xl p-2 font-bold">
+
+                                💾 Enregistrer
+
+                            </button>
+
+                            <button
+                                onclick="deleteVideo('${item.name}')"
+                                class="bg-red-500 hover:bg-red-400 text-black rounded-xl p-2 font-bold">
+
+                                🗑 Supprimer
+
+                            </button>
+
+                        </div>
+
+                    `;
+
+                    historyContainer.appendChild(div);
+
+                });
+
+            }catch(err){
+
+                console.log(err);
+
+            }
+
+        }
+
+        /* =========================================
+           LIRE VIDEO
+        ========================================= */
+
+        function playVideo(name){
+
+            window.open(
+                API +
+                "/downloads/" +
+                encodeURIComponent(name)
+            );
+
+        }
+
+        /* =========================================
+           ENREGISTRER VIDEO
+        ========================================= */
+
+        function saveVideo(url){
+
+            const a =
+                document.createElement("a");
+
+            a.href = url;
+
+            a.download = "";
+
+            a.click();
+
+        }
+
+        /* =========================================
+           SUPPRIMER VIDEO
+        ========================================= */
+
+        async function deleteVideo(name){
+
+            const res =
+                await fetch(
+                    API + "/delete",
+                    {
+                        method:"POST",
+
+                        headers:{
+                            "Content-Type":
+                            "application/json"
+                        },
+
+                        body:JSON.stringify({
+                            name
+                        })
+                    }
+                );
+
+            const data =
+                await res.json();
+
+            ai(data.message);
+
+            loadHistory();
+
+        }
+
+        /* =========================================
+           MASQUER HISTORIQUE
+        ========================================= */
+
+        toggleHistory.addEventListener(
+            "click",
+            ()=>{
+
+                hidden = !hidden;
+
+                historyContainer.style.display =
+                    hidden
+                    ? "none"
+                    : "block";
+
+                toggleHistory.textContent =
+                    hidden
+                    ? "Afficher"
+                    : "Masquer";
+
+            }
+        );
+
+    </script>
 
 </body>
-
 </html>

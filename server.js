@@ -1,84 +1,289 @@
+/* =========================================
+   ASSANEDOWN SERVER — VERSION CORRIGÉE
+========================================= */
+
 const express = require("express");
 const cors = require("cors");
-const ytdl = require("ytdl-core");
+const { spawn, exec } = require("child_process");
+const path = require("path");
+const fs = require("fs");
 
 const app = express();
+
+/* =========================================
+   CONFIG
+========================================= */
 
 app.use(cors());
 app.use(express.json());
 
+/* =========================================
+   DOSSIER DOWNLOADS
+========================================= */
+
+const downloadsPath = path.join(__dirname, "downloads");
+
+if (!fs.existsSync(downloadsPath)) {
+    fs.mkdirSync(downloadsPath);
+}
+
+/* =========================================
+   RENDRE DOWNLOADS PUBLIC
+========================================= */
+
+app.use(
+    "/downloads",
+    express.static(downloadsPath)
+);
+
+/* =========================================
+   HISTORIQUE
+========================================= */
+
 let history = [];
 
-/*
-========================
-📥 DOWNLOAD UNIVERSAL
-========================
-*/
-app.get("/download", async (req, res) => {
+/* =========================================
+   HOME
+========================================= */
 
-    const url = req.query.url;
+app.get("/", (req, res) => {
 
-    if (!url) {
-        return res.send("Lien manquant");
-    }
+    res.send(`
+        <h1>🚀 AssaneDown actif</h1>
+        <p>Serveur Node.js opérationnel ✔</p>
+    `);
 
-    // 🔥 CASE 1: YouTube
-    if (ytdl.validateURL(url)) {
+});
 
-        try {
-            history.unshift({
-                type: "youtube",
-                url,
-                date: new Date().toLocaleString()
-            });
+/* =========================================
+   OUVRIR DOSSIER DOWNLOADS
+========================================= */
 
-            res.header(
-                "Content-Disposition",
-                'attachment; filename="youtube_video.mp4"'
-            );
+app.get("/open-folder", (req, res) => {
 
-            ytdl(url, {
-                quality: "highest"
-            }).pipe(res);
+    exec(`start "" "${downloadsPath}"`);
 
-        } catch (e) {
-            res.send("Erreur YouTube download");
-        }
+    res.json({
+        success: true,
+        message: "Dossier ouvert ✔"
+    });
 
-        return;
-    }
+});
 
-    // 🔥 CASE 2: MP4 direct
-    if (url.endsWith(".mp4")) {
+/* =========================================
+   HISTORIQUE
+========================================= */
 
-        history.unshift({
-            type: "mp4",
-            url,
-            date: new Date().toLocaleString()
+app.get("/history", (req, res) => {
+
+    res.json(history);
+
+});
+
+/* =========================================
+   SUPPRIMER VIDEO
+========================================= */
+
+app.post("/delete", (req, res) => {
+
+    const { name } = req.body;
+
+    if (!name) {
+
+        return res.json({
+            success: false,
+            message: "Nom fichier manquant ❌"
         });
 
-        return res.redirect(url);
     }
 
-    return res.send("Lien non supporté");
+    const filePath = path.join(downloadsPath, name);
+
+    try {
+
+        if (fs.existsSync(filePath)) {
+
+            fs.unlinkSync(filePath);
+
+            history = history.filter(
+                item => item.name !== name
+            );
+
+            return res.json({
+                success: true,
+                message: "Vidéo supprimée ✔"
+            });
+
+        }
+
+        res.json({
+            success: false,
+            message: "Fichier introuvable ❌"
+        });
+
+    } catch (err) {
+
+        console.log(err);
+
+        res.json({
+            success: false,
+            message: "Erreur suppression ❌"
+        });
+
+    }
+
 });
 
-/*
-========================
-📜 HISTORIQUE
-========================
-*/
-app.get("/history", (req, res) => {
-    res.json(history);
+/* =========================================
+   TELECHARGEMENT VIDEO
+========================================= */
+
+app.post("/download", (req, res) => {
+
+    const url = req.body.url;
+
+    console.log("📥 VIDEO :", url);
+
+    /* =========================
+       VERIFICATION
+    ========================= */
+
+    if (!url || !url.startsWith("http")) {
+
+        return res.json({
+            success: false,
+            message: "Lien invalide ❌"
+        });
+
+    }
+
+    /* =========================
+       TEMPLATE FICHIER
+    ========================= */
+
+    const outputTemplate = path.join(
+        downloadsPath,
+        "%(title)s.%(ext)s"
+    );
+
+    /* =========================
+       YT-DLP
+    ========================= */
+
+    const yt = spawn("python", [
+        "-m",
+        "yt_dlp",
+        "-o",
+        outputTemplate,
+        url
+    ]);
+
+    let error = "";
+
+    yt.stderr.on("data", (data) => {
+
+        error += data.toString();
+
+        console.log(data.toString());
+
+    });
+
+    /* =========================
+       FIN TELECHARGEMENT
+    ========================= */
+
+    yt.on("close", () => {
+
+        try {
+
+            const files = fs
+                .readdirSync(downloadsPath)
+                .map(name => {
+
+                    const fullPath = path.join(
+                        downloadsPath,
+                        name
+                    );
+
+                    const stats = fs.statSync(fullPath);
+
+                    return {
+                        name,
+                        time: stats.mtime.getTime()
+                    };
+
+                })
+                .sort((a, b) => b.time - a.time);
+
+            if (files.length === 0) {
+
+                return res.json({
+                    success: false,
+                    message: "Aucune vidéo trouvée ❌"
+                });
+
+            }
+
+            const lastFile = files[0].name;
+
+            const fullPath = path.join(
+                downloadsPath,
+                lastFile
+            );
+
+            const stats = fs.statSync(fullPath);
+
+            const sizeMB = (
+                stats.size / (1024 * 1024)
+            ).toFixed(2);
+
+            const item = {
+
+                name: lastFile,
+
+                size: sizeMB + " MB",
+
+                date: new Date().toLocaleString(),
+
+                url:
+                    "http://127.0.0.1:3000/downloads/" +
+                    encodeURIComponent(lastFile)
+
+            };
+
+            history.push(item);
+
+            console.log("✅ TELECHARGE :", item.name);
+
+            res.json({
+                success: true,
+                message: "Vidéo téléchargée ✔",
+                file: item
+            });
+
+        } catch (err) {
+
+            console.log(err);
+
+            res.json({
+                success: false,
+                message: "Erreur lecture fichier ❌"
+            });
+
+        }
+
+    });
+
 });
 
-/*
-========================
-🚀 PORT CORRIGÉ (IMPORTANT)
-========================
-*/
-const PORT = process.env.PORT || 3000;
+/* =========================================
+   START SERVER
+========================================= */
 
-app.listen(PORT, () => {
-    console.log("🚀 Assane Down ULTRA PRO OK sur port " + PORT);
+app.listen(3000, () => {
+
+    console.log(
+        "🚀 AssaneDown actif sur http://127.0.0.1:3000"
+    );
+
 });

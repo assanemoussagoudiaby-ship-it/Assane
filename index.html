@@ -1,139 +1,226 @@
 <!DOCTYPE html>
 <html lang="fr">
+
 <head>
-<meta charset="UTF-8">
-<title>Assane Down Ultra Pro</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-<style>
-body{
-    font-family: Arial;
-    background: #0a0615;
-    color: white;
-    text-align: center;
-    padding: 20px;
-}
+    <!-- TITRE -->
+    <title>AssaneDown</title>
 
-h1{
-    font-size: 38px;
-}
+    <!-- LOGO ONGLET -->
+    <link rel="icon" type="image/png" href="logo.png">
 
-input{
-    width: 80%;
-    padding: 12px;
-    border-radius: 10px;
-    border: none;
-    margin-top: 15px;
-}
+    <!-- TAILWIND -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-button{
-    padding: 12px;
-    margin: 8px;
-    border-radius: 10px;
-    border: none;
-    cursor: pointer;
-    font-weight: bold;
-}
+    <style>
 
-#download{ background: green; color: white; }
-#historyBtn{ background: blue; color: white; }
-#openBtn{ background: orange; color: black; }
+        body{
+            background:#020617;
+            overflow-x:hidden;
+        }
 
-video{
-    width: 90%;
-    margin-top: 20px;
-    display: none;
-    border-radius: 12px;
-}
+        .glass{
+            background: rgba(15,23,42,0.8);
+            backdrop-filter: blur(10px);
+        }
 
-.box{
-    margin-top: 20px;
-    background: #1e1b2e;
-    padding: 15px;
-    border-radius: 10px;
-}
-</style>
+        .neon{
+            box-shadow:0 0 20px #06b6d4;
+        }
+
+        .history-scroll{
+            max-height:300px;
+            overflow-y:auto;
+        }
+
+    </style>
 
 </head>
 
-<body>
+<body class="text-white min-h-screen flex items-center justify-center p-5">
 
-<h1>🇸🇳 Assane Down Ultra Pro</h1>
+    <!-- AUDIO -->
+    <audio id="welcomeSound" autoplay>
+        <source src="audio/welcome.mp3" type="audio/mp3">
+    </audio>
 
-<input id="link" placeholder="Colle un lien YouTube ou MP4">
+    <!-- CONTAINER -->
+    <div class="glass w-full max-w-2xl rounded-3xl p-6 neon border border-cyan-500">
 
-<br>
+        <!-- HEADER -->
+        <div class="flex flex-col items-center">
 
-<button id="download">⬇ Télécharger</button>
-<button id="openBtn">▶ Lire</button>
-<button id="historyBtn">📜 Historique</button>
+            <!-- LOGO -->
+            <img
+                src="logo.png"
+                alt="AssaneDown"
+                class="w-32 h-32 rounded-3xl object-cover border-4 border-cyan-400 shadow-2xl mb-4">
 
-<video id="player" controls></video>
+            <!-- TITRE -->
+            <h1 class="text-5xl font-bold text-cyan-400 mb-2">
+                AssaneDown
+            </h1>
 
-<div class="box" id="historyBox"></div>
-
-<script>
-
-const SERVER = "http://localhost:3000";
-
-const input = document.getElementById("link");
-const video = document.getElementById("player");
-const historyBox = document.getElementById("historyBox");
-
-/*
-========================
-▶ LECTURE VIDÉO
-========================
-*/
-document.getElementById("openBtn").onclick = () => {
-
-    const url = input.value.trim();
-
-    if (!url) return alert("Lien vide");
-
-    video.src = url;
-    video.style.display = "block";
-};
-
-/*
-========================
-⬇ DOWNLOAD
-========================
-*/
-document.getElementById("download").onclick = () => {
-
-    const url = input.value.trim();
-
-    if (!url) return alert("Lien vide");
-
-    window.location.href =
-        SERVER + "/download?url=" + encodeURIComponent(url);
-};
-
-/*
-========================
-📜 HISTORIQUE
-========================
-*/
-document.getElementById("historyBtn").onclick = async () => {
-
-    const res = await fetch(SERVER + "/history");
-    const data = await res.json();
-
-    historyBox.innerHTML = "<h3>Historique</h3>";
-
-    data.forEach(v => {
-        historyBox.innerHTML += `
-            <p>
-            📹 ${v.type.toUpperCase()}<br>
-            🔗 ${v.url}<br>
-            🕒 ${v.date}
+            <p class="text-slate-400 text-center">
+                Smart Video Downloader
             </p>
-            <hr>
-        `;
-    });
-};
 
-</script>
+        </div>
+
+        <!-- IA -->
+        <div class="bg-slate-800 mt-6 rounded-2xl p-4 border border-slate-700">
+
+            <div class="flex items-center gap-3 mb-2">
+
+                <div class="w-12 h-12 rounded-full bg-cyan-500 flex items-center justify-center text-black font-bold">
+                    AI
+                </div>
+
+                <div>
+                    <h2 class="font-bold text-cyan-300">
+                        🤖 IA Assane
+                    </h2>
+
+                    <p class="text-sm text-slate-400">
+                        Assistant intelligent
+                    </p>
+                </div>
+
+            </div>
+
+            <p
+                id="aiMessage"
+                class="text-slate-200 text-sm">
+                👋 Bienvenue sur l'application Assane Moussa Goudiaby
+            </p>
+
+        </div>
+
+        <!-- INPUT -->
+        <div class="mt-6">
+
+            <input
+                id="videoUrl"
+                type="text"
+                placeholder="Collez un lien YouTube, TikTok, Facebook..."
+                class="w-full p-4 rounded-2xl bg-slate-900 border border-slate-700 outline-none text-white">
+
+        </div>
+
+        <!-- BOUTONS -->
+        <div class="grid grid-cols-2 gap-4 mt-5">
+
+            <button
+                id="pasteBtn"
+                class="bg-slate-700 hover:bg-slate-600 transition-all p-4 rounded-2xl font-bold">
+                📋 Coller
+            </button>
+
+            <button
+                id="downloadBtn"
+                class="bg-cyan-500 hover:bg-cyan-400 text-black transition-all p-4 rounded-2xl font-bold">
+                📥 Télécharger
+            </button>
+
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="grid grid-cols-2 gap-4 mt-4">
+
+            <button
+                onclick="toggleHistory()"
+                class="bg-purple-600 hover:bg-purple-500 transition-all p-3 rounded-2xl font-bold">
+                👁 Historique
+            </button>
+
+            <button
+                onclick="openFolder()"
+                class="bg-emerald-600 hover:bg-emerald-500 transition-all p-3 rounded-2xl font-bold">
+                📁 Downloads
+            </button>
+
+        </div>
+
+        <!-- STATUS -->
+        <div class="mt-5">
+
+            <div
+                id="status"
+                class="bg-slate-900 border border-slate-700 rounded-2xl p-4 text-center font-bold text-cyan-300">
+                🚀 AssaneDown prêt
+            </div>
+
+        </div>
+
+        <!-- VIDEO PLAYER -->
+        <div class="mt-6">
+
+            <video
+                id="videoPlayer"
+                controls
+                class="w-full rounded-2xl hidden border border-slate-700">
+            </video>
+
+        </div>
+
+        <!-- HISTORIQUE -->
+        <div
+            id="historyBox"
+            class="mt-6 bg-slate-900 rounded-2xl p-4 border border-slate-700 history-scroll">
+
+            <div class="flex items-center justify-between mb-4">
+
+                <h2 class="text-2xl font-bold text-cyan-300">
+                    📁 Historique
+                </h2>
+
+                <button
+                    onclick="toggleHistory()"
+                    class="bg-red-500 hover:bg-red-400 px-4 py-2 rounded-xl font-bold text-black">
+                    ❌ Masquer
+                </button>
+
+            </div>
+
+            <!-- VIDEOS -->
+            <div id="historyList">
+
+                <div class="bg-slate-800 p-4 rounded-2xl mb-3">
+
+                    <p class="font-bold">
+                        🎥 Aucune vidéo téléchargée
+                    </p>
+
+                    <p class="text-sm text-slate-400">
+                        Les vidéos apparaîtront ici
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="mt-6 text-center">
+
+            <p class="text-slate-500 text-sm">
+                © 2026 AssaneDown — By Assane Moussa Goudiaby
+            </p>
+
+            <p class="text-cyan-400 text-xs mt-1">
+                assanedown.com
+            </p>
+
+        </div>
+
+    </div>
+
+    <!-- SCRIPT -->
+    <script src="script.js"></script>
 
 </body>
+
 </html>

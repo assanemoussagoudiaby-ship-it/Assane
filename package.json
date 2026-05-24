@@ -1,13 +1,19 @@
 {
-  "name": "assane-down",
+  "name": "assane-downloader",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "",
+  "main": "script.js",
   "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
   "dependencies": {
-    "express": "^4.18.2",
-    "cors": "^2.8.5",
-    "ytdl-core": "^4.11.5"
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "open": "^11.0.0"
   }
-}
+}                                                                         

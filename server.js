@@ -1,6 +1,5 @@
 /* =========================================
-   ASSANEDOWN SERVER FINAL
-   Node.js + Express + yt-dlp
+   ASSANEDOWN SERVER FINAL FIXED
 ========================================= */
 
 const express = require("express");
@@ -16,42 +15,29 @@ const app = express();
 ========================================= */
 
 app.use(cors());
-
 app.use(express.json());
 
 /* =========================================
-   FRONTEND HTML
+   FRONTEND
 ========================================= */
 
 app.use(express.static(__dirname));
 
 /* =========================================
-   DOWNLOADS FOLDER
+   DOWNLOADS
 ========================================= */
 
-const downloadsPath = path.join(
-    __dirname,
-    "downloads"
-);
-
-/* =========================================
-   CREATE DOWNLOADS
-========================================= */
+const downloadsPath = path.join(__dirname, "downloads");
 
 if (!fs.existsSync(downloadsPath)) {
-
     fs.mkdirSync(downloadsPath);
-
 }
 
 /* =========================================
-   PUBLIC DOWNLOADS
+   STATIC DOWNLOADS
 ========================================= */
 
-app.use(
-    "/downloads",
-    express.static(downloadsPath)
-);
+app.use("/downloads", express.static(downloadsPath));
 
 /* =========================================
    HISTORY
@@ -64,15 +50,11 @@ let history = [];
 ========================================= */
 
 app.get("/", (req, res) => {
-
-    res.sendFile(
-        path.join(__dirname, "index.html")
-    );
-
+    res.sendFile(path.join(__dirname, "index.html"));
 });
 
 /* =========================================
-   DOWNLOAD VIDEO
+   DOWNLOAD VIDEO (FIXED VERSION)
 ========================================= */
 
 app.post("/download", (req, res) => {
@@ -81,182 +63,124 @@ app.post("/download", (req, res) => {
 
     console.log("📥 VIDEO :", url);
 
-    /* =========================
-       VERIFY URL
-    ========================= */
-
     if (!url || !url.startsWith("http")) {
-
         return res.json({
             success: false,
             message: "Lien invalide ❌"
         });
-
     }
-
-    /* =========================
-       OUTPUT TEMPLATE
-    ========================= */
 
     const outputTemplate = path.join(
         downloadsPath,
         "%(title)s.%(ext)s"
     );
 
-    /* =========================
-       YT-DLP
-    ========================= */
+    /* =====================================
+       RUN YT-DLP (STABLE VERSION)
+    ===================================== */
 
-    const yt = spawn("python", [
-        "-m",
-        "yt_dlp",
+    const yt = spawn("yt-dlp", [
+        "-f",
+        "best",
         "-o",
         outputTemplate,
         url
     ]);
 
-    let error = "";
+    let errorLog = "";
 
     yt.stderr.on("data", (data) => {
-
-        error += data.toString();
-
-        console.log(data.toString());
-
+        errorLog += data.toString();
+        console.log("YT-DLP:", data.toString());
     });
 
-    /* =========================
-       FINISH
-    ========================= */
+    yt.on("error", (err) => {
+        console.log("❌ PROCESS ERROR:", err);
+
+        return res.json({
+            success: false,
+            message: "yt-dlp introuvable sur le serveur ❌"
+        });
+    });
 
     yt.on("close", () => {
 
-        try {
+        // 🔥 IMPORTANT: attendre écriture disque Render
+        setTimeout(() => {
 
-            const files = fs
-                .readdirSync(downloadsPath)
-                .map(name => {
+            try {
 
-                    const fullPath = path.join(
-                        downloadsPath,
-                        name
-                    );
+                const files = fs.readdirSync(downloadsPath);
 
-                    const stats =
-                        fs.statSync(fullPath);
+                if (!files.length) {
+                    return res.json({
+                        success: false,
+                        message: "Aucune vidéo trouvée ❌"
+                    });
+                }
 
-                    return {
+                const sorted = files
+                    .map(name => {
+                        const fullPath = path.join(downloadsPath, name);
+                        const stats = fs.statSync(fullPath);
 
-                        name,
+                        return {
+                            name,
+                            time: stats.mtime.getTime()
+                        };
+                    })
+                    .sort((a, b) => b.time - a.time);
 
-                        time:
-                            stats.mtime.getTime()
+                const lastFile = sorted[0].name;
 
-                    };
+                const filePath = path.join(downloadsPath, lastFile);
+                const stats = fs.statSync(filePath);
 
-                })
-                .sort((a, b) => b.time - a.time);
+                const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
 
-            if (files.length === 0) {
+                const item = {
+                    name: lastFile,
+                    size: sizeMB + " MB",
+                    date: new Date().toLocaleString(),
+                    url:
+                        req.protocol +
+                        "://" +
+                        req.get("host") +
+                        "/downloads/" +
+                        encodeURIComponent(lastFile)
+                };
+
+                history.push(item);
+
+                console.log("✅ DOWNLOAD OK :", item.name);
+
+                return res.json({
+                    success: true,
+                    message: "Vidéo téléchargée ✔",
+                    file: item
+                });
+
+            } catch (err) {
+                console.log("READ ERROR:", err);
 
                 return res.json({
                     success: false,
-                    message: "Aucune vidéo trouvée ❌"
+                    message: "Erreur lecture fichier ❌"
                 });
-
             }
 
-            /* =========================
-               LAST FILE
-            ========================= */
-
-            const lastFile = files[0].name;
-
-            const fullPath = path.join(
-                downloadsPath,
-                lastFile
-            );
-
-            const stats =
-                fs.statSync(fullPath);
-
-            const sizeMB = (
-                stats.size /
-                (1024 * 1024)
-            ).toFixed(2);
-
-            const item = {
-
-                name: lastFile,
-
-                size: sizeMB + " MB",
-
-                date:
-                    new Date()
-                    .toLocaleString(),
-
-                url:
-                    req.protocol +
-                    "://" +
-                    req.get("host") +
-                    "/downloads/" +
-                    encodeURIComponent(lastFile)
-
-            };
-
-            /* =========================
-               SAVE HISTORY
-            ========================= */
-
-            history.push(item);
-
-            console.log(
-                "✅ TELECHARGE :",
-                item.name
-            );
-
-            /* =========================
-               RESPONSE
-            ========================= */
-
-            res.json({
-
-                success: true,
-
-                message:
-                    "Vidéo téléchargée ✔",
-
-                file: item
-
-            });
-
-        } catch (err) {
-
-            console.log(err);
-
-            res.json({
-
-                success: false,
-
-                message:
-                    "Erreur lecture fichier ❌"
-
-            });
-
-        }
+        }, 3500); // 🔥 FIX RENDER DELAY
 
     });
 
 });
 
 /* =========================================
-   HISTORY ROUTE
+   HISTORY
 ========================================= */
 
 app.get("/history", (req, res) => {
-
     res.json(history);
-
 });
 
 /* =========================================
@@ -267,28 +191,11 @@ app.post("/delete", (req, res) => {
 
     const { name } = req.body;
 
-    if (!name) {
-
-        return res.json({
-
-            success: false,
-
-            message:
-                "Nom fichier manquant ❌"
-
-        });
-
-    }
-
-    const filePath = path.join(
-        downloadsPath,
-        name
-    );
+    const filePath = path.join(downloadsPath, name);
 
     try {
 
         if (fs.existsSync(filePath)) {
-
             fs.unlinkSync(filePath);
 
             history = history.filter(
@@ -296,44 +203,29 @@ app.post("/delete", (req, res) => {
             );
 
             return res.json({
-
                 success: true,
-
-                message:
-                    "Vidéo supprimée ✔"
-
+                message: "Vidéo supprimée ✔"
             });
-
         }
 
-        res.json({
-
+        return res.json({
             success: false,
-
-            message:
-                "Fichier introuvable ❌"
-
+            message: "Fichier introuvable ❌"
         });
 
     } catch (err) {
-
         console.log(err);
 
-        res.json({
-
+        return res.json({
             success: false,
-
-            message:
-                "Erreur suppression ❌"
-
+            message: "Erreur suppression ❌"
         });
-
     }
 
 });
 
 /* =========================================
-   OPEN DOWNLOADS FOLDER
+   OPEN FOLDER
 ========================================= */
 
 app.get("/open-folder", (req, res) => {
@@ -341,35 +233,20 @@ app.get("/open-folder", (req, res) => {
     try {
 
         if (process.platform === "win32") {
-
-            exec(
-                `start "" "${downloadsPath}"`
-            );
-
+            exec(`start "" "${downloadsPath}"`);
         }
 
         res.json({
-
             success: true,
-
-            message:
-                "Dossier ouvert ✔"
-
+            message: "Dossier ouvert ✔"
         });
 
     } catch (err) {
 
-        console.log(err);
-
         res.json({
-
             success: false,
-
-            message:
-                "Impossible d'ouvrir dossier ❌"
-
+            message: "Erreur dossier ❌"
         });
-
     }
 
 });
@@ -378,13 +255,8 @@ app.get("/open-folder", (req, res) => {
    START SERVER
 ========================================= */
 
-const PORT =
-    process.env.PORT || 3000;
+const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-
-    console.log(
-        `🚀 AssaneDown actif sur le port ${PORT}`
-    );
-
+    console.log("🚀 AssaneDown actif sur port " + PORT);
 });

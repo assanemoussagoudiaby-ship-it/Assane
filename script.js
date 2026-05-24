@@ -1,129 +1,451 @@
-const videoUrl = document.getElementById("videoUrl");
-const downloadBtn = document.getElementById("downloadBtn");
-const pasteBtn = document.getElementById("pasteBtn");
-const status = document.getElementById("status");
-const aiMessage = document.getElementById("aiMessage");
+/* =========================================
+   ASSANEDOWN - SCRIPT FINAL
+   By Assane le malin garçon 😎
+========================================= */
 
-const historyBox = document.createElement("div");
-document.body.appendChild(historyBox);
+/* =========================================
+   ELEMENTS
+========================================= */
+
+const videoUrl =
+    document.getElementById("videoUrl");
+
+const pasteBtn =
+    document.getElementById("pasteBtn");
+
+const downloadBtn =
+    document.getElementById("downloadBtn");
+
+const clearBtn =
+    document.getElementById("clearBtn");
+
+const historyBtn =
+    document.getElementById("historyBtn");
+
+const historyBox =
+    document.getElementById("historyBox");
+
+const status =
+    document.getElementById("status");
+
+const aiMessage =
+    document.getElementById("aiMessage");
+
+/* =========================================
+   BACKEND RENDER
+========================================= */
+
+const API =
+    "https://assanedown-oefv.onrender.com";
+
+/* =========================================
+   IA ASSANE
+========================================= */
+
+function ai(text) {
+
+    aiMessage.innerHTML = text;
+
+}
+
+/* =========================================
+   STATUS
+========================================= */
+
+function show(text, color = "white") {
+
+    status.innerHTML = text;
+
+    status.style.color = color;
+
+}
+
+/* =========================================
+   VOIX IA
+========================================= */
+
+function speak(text) {
+
+    try {
+
+        const speech =
+            new SpeechSynthesisUtterance(text);
+
+        speech.lang = "fr-FR";
+
+        speech.rate = 1;
+
+        speech.pitch = 1;
+
+        speech.volume = 1;
+
+        speechSynthesis.speak(speech);
+
+    } catch {}
+
+}
+
+/* =========================================
+   BIENVENUE
+========================================= */
+
+window.addEventListener("load", () => {
+
+    ai(`
+        👋 Bienvenue sur <b>AssaneDown</b><br>
+        📥 Télécharge vidéos TikTok,
+        Facebook et YouTube.
+    `);
+
+    speak(
+        "Bienvenue sur AssaneDown créé par Assane Moussa Goudiaby"
+    );
+
+    loadHistory();
+
+});
+
+/* =========================================
+   INTERNET
+========================================= */
+
+function checkInternet() {
+
+    if (!navigator.onLine) {
+
+        ai("❌ Pas de connexion internet.");
+
+        show(
+            "Connexion internet requise ❌",
+            "red"
+        );
+
+        return false;
+
+    }
+
+    return true;
+
+}
+
+/* =========================================
+   CLEAR INPUT
+========================================= */
+
+clearBtn.addEventListener("click", () => {
+
+    videoUrl.value = "";
+
+    show(
+        "Lien supprimé ✔",
+        "orange"
+    );
+
+    ai(
+        "🧹 Champ nettoyé."
+    );
+
+});
+
+/* =========================================
+   PASTE LINK
+========================================= */
+
+pasteBtn.addEventListener(
+    "click",
+    async () => {
+
+        if (!checkInternet()) return;
+
+        try {
+
+            const text =
+                await navigator.clipboard.readText();
+
+            videoUrl.value = text;
+
+            show(
+                "Lien collé ✔",
+                "lightgreen"
+            );
+
+            ai(
+                "📋 Lien vidéo collé avec succès."
+            );
+
+        } catch {
+
+            show(
+                "Impossible de coller ❌",
+                "red"
+            );
+
+        }
+
+    }
+);
+
+/* =========================================
+   DOWNLOAD
+========================================= */
+
+downloadBtn.addEventListener(
+    "click",
+    async () => {
+
+        if (!checkInternet()) return;
+
+        const url =
+            videoUrl.value.trim();
+
+        if (!url) {
+
+            show(
+                "Ajoute un lien vidéo ❌",
+                "red"
+            );
+
+            ai(
+                "⚠ Veuillez ajouter un lien."
+            );
+
+            return;
+
+        }
+
+        try {
+
+            ai(
+                "⏳ Extraction vidéo en cours..."
+            );
+
+            show(
+                "Téléchargement...",
+                "orange"
+            );
+
+            /* =========================
+               FETCH SERVER
+            ========================= */
+
+            const response =
+                await fetch(
+                    API + "/download",
+                    {
+                        method: "POST",
+
+                        headers: {
+                            "Content-Type":
+                                "application/json"
+                        },
+
+                        body: JSON.stringify({
+                            url
+                        })
+                    }
+                );
+
+            const data =
+                await response.json();
+
+            /* =========================
+               SUCCESS
+            ========================= */
+
+            if (data.success) {
+
+                show(
+                    "Vidéo prête ✔",
+                    "lightgreen"
+                );
+
+                ai(`
+                    🎉 Vidéo prête.<br>
+                    📁 Taille :
+                    ${data.file.size}
+                `);
+
+                /* =========================
+                   DOWNLOAD DIRECT
+                ========================= */
+
+                const a =
+                    document.createElement("a");
+
+                a.href = data.file.url;
+
+                a.download =
+                    data.file.name;
+
+                document.body.appendChild(a);
+
+                a.click();
+
+                a.remove();
+
+                /* =========================
+                   SAVE HISTORY LOCAL
+                ========================= */
+
+                saveHistory(data.file);
+
+                loadHistory();
+
+            } else {
+
+                show(
+                    data.message,
+                    "red"
+                );
+
+                ai(
+                    "❌ Impossible de télécharger."
+                );
+
+            }
+
+        } catch (err) {
+
+            console.log(err);
+
+            show(
+                "Serveur inaccessible ❌",
+                "red"
+            );
+
+            ai(
+                "❌ Impossible de joindre Render."
+            );
+
+        }
+
+    }
+);
+
+/* =========================================
+   LOCAL HISTORY
+========================================= */
+
+function saveHistory(video) {
+
+    let history =
+        JSON.parse(
+            localStorage.getItem(
+                "assane_history"
+            )
+        ) || [];
+
+    history.unshift(video);
+
+    localStorage.setItem(
+        "assane_history",
+        JSON.stringify(history)
+    );
+
+}
+
+/* =========================================
+   LOAD HISTORY
+========================================= */
+
+function loadHistory() {
+
+    let history =
+        JSON.parse(
+            localStorage.getItem(
+                "assane_history"
+            )
+        ) || [];
+
+    historyBox.innerHTML = "";
+
+    if (history.length === 0) {
+
+        historyBox.innerHTML = `
+            <p style="
+                color:gray;
+                text-align:center;
+            ">
+                Aucun téléchargement
+            </p>
+        `;
+
+        return;
+
+    }
+
+    history.forEach(video => {
+
+        historyBox.innerHTML += `
+
+        <div class="history-item">
+
+            <p>
+                🎥 ${video.name}
+            </p>
+
+            <p>
+                📦 ${video.size}
+            </p>
+
+            <div class="buttons">
+
+                <a
+                    href="${video.url}"
+                    target="_blank"
+                    class="read-btn"
+                >
+                    ▶ Lire
+                </a>
+
+                <a
+                    href="${video.url}"
+                    download="${video.name}"
+                    class="save-btn"
+                >
+                    📥 Enregistrer
+                </a>
+
+            </div>
+
+        </div>
+
+        `;
+
+    });
+
+}
+
+/* =========================================
+   SHOW / HIDE HISTORY
+========================================= */
 
 let historyVisible = true;
 
-/* =========================
-   UI
-========================= */
-function show(msg, color) {
-    status.textContent = msg;
-    status.style.color = color;
-}
+historyBtn.addEventListener(
+    "click",
+    () => {
 
-function ai(msg) {
-    aiMessage.textContent = msg;
-}
+        historyVisible =
+            !historyVisible;
 
-/* =========================
-   TOGGLE HISTORY
-========================= */
-function toggleHistory() {
-    historyVisible = !historyVisible;
-    historyBox.style.display = historyVisible ? "block" : "none";
-}
+        if (historyVisible) {
 
-/* =========================
-   DELETE FILE
-========================= */
-async function deleteFile(name) {
+            historyBox.style.display =
+                "block";
 
-    await fetch("http://127.0.0.1:3000/delete", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name })
-    });
+            historyBtn.innerHTML =
+                "🙈 Masquer historique";
 
-    loadHistory();
-}
+        } else {
 
-/* =========================
-   PLAY VIDEO
-========================= */
-function playVideo(name) {
-    window.open("downloads/" + name);
-}
+            historyBox.style.display =
+                "none";
 
-/* =========================
-   LOAD HISTORY
-========================= */
-async function loadHistory() {
+            historyBtn.innerHTML =
+                "📜 Afficher historique";
 
-    const res = await fetch("http://127.0.0.1:3000/history");
-    const data = await res.json();
+        }
 
-    historyBox.innerHTML = `
-        <h3>📁 Historique</h3>
-        <button onclick="toggleHistory()">👁 Masquer / Afficher</button>
-        <hr>
-    `;
-
-    data.reverse().forEach(file => {
-
-        const div = document.createElement("div");
-
-        div.innerHTML = `
-            <p>🎥 ${file.name}</p>
-            <p>📦 ${file.size}</p>
-            <p>🕒 ${file.date}</p>
-
-            <button onclick="playVideo('${file.name}')">▶ Lire</button>
-            <button onclick="deleteFile('${file.name}')">🗑 Supprimer</button>
-
-            <hr>
-        `;
-
-        historyBox.appendChild(div);
-    });
-}
-
-/* =========================
-   DOWNLOAD
-========================= */
-downloadBtn.addEventListener("click", async () => {
-
-    const url = videoUrl.value.trim();
-
-    if (!url) {
-        show("Ajoute un lien ❌", "red");
-        return;
     }
-
-    ai("⏳ Téléchargement...");
-
-    const res = await fetch("http://127.0.0.1:3000/download", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url })
-    });
-
-    const data = await res.json();
-
-    if (data.success) {
-        show("Téléchargé ✔", "green");
-        ai("🎉 Vidéo enregistrée");
-        loadHistory();
-    } else {
-        show(data.message, "red");
-        ai("❌ Erreur");
-    }
-});
-
-/* =========================
-   PASTE
-========================= */
-pasteBtn.addEventListener("click", async () => {
-    const text = await navigator.clipboard.readText();
-    videoUrl.value = text;
-});
-
-/* =========================
-   INIT
-========================= */
-loadHistory();
+);

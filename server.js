@@ -1,30 +1,32 @@
-/* =========================================
-   ASSANEDOWN SERVER FINAL FIXED
-========================================= */
 
 const express = require("express");
 const cors = require("cors");
-const { spawn, exec } = require("child_process");
 const path = require("path");
 const fs = require("fs");
+const { spawn } = require("child_process");
 
 const app = express();
+
+/* =========================================
+   CORS FIX GLOBAL
+========================================= */
+
+app.use((req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+    res.header("Access-Control-Allow-Methods", "*");
+    next();
+});
 
 /* =========================================
    CONFIG
 ========================================= */
 
-app.use(cors());
 app.use(express.json());
-
-/* =========================================
-   FRONTEND
-========================================= */
-
 app.use(express.static(__dirname));
 
 /* =========================================
-   DOWNLOADS
+   DOWNLOADS FOLDER
 ========================================= */
 
 const downloadsPath = path.join(__dirname, "downloads");
@@ -32,10 +34,6 @@ const downloadsPath = path.join(__dirname, "downloads");
 if (!fs.existsSync(downloadsPath)) {
     fs.mkdirSync(downloadsPath);
 }
-
-/* =========================================
-   STATIC DOWNLOADS
-========================================= */
 
 app.use("/downloads", express.static(downloadsPath));
 
@@ -46,6 +44,14 @@ app.use("/downloads", express.static(downloadsPath));
 let history = [];
 
 /* =========================================
+   HEALTH CHECK
+========================================= */
+
+app.get("/health", (req, res) => {
+    res.json({ status: "OK" });
+});
+
+/* =========================================
    HOME
 ========================================= */
 
@@ -54,14 +60,14 @@ app.get("/", (req, res) => {
 });
 
 /* =========================================
-   DOWNLOAD VIDEO (FIXED VERSION)
+   DOWNLOAD (FIX FINAL STABLE RENDER)
 ========================================= */
 
 app.post("/download", (req, res) => {
 
     const url = req.body.url;
 
-    console.log("📥 VIDEO :", url);
+    console.log("📥 VIDEO:", url);
 
     if (!url || !url.startsWith("http")) {
         return res.json({
@@ -76,10 +82,12 @@ app.post("/download", (req, res) => {
     );
 
     /* =====================================
-       RUN YT-DLP (STABLE VERSION)
+       🔥 IMPORTANT FIX RENDER
     ===================================== */
 
-    const yt = spawn("yt-dlp", [
+    const yt = spawn("python3", [
+        "-m",
+        "yt_dlp",
         "-f",
         "best",
         "-o",
@@ -95,7 +103,7 @@ app.post("/download", (req, res) => {
     });
 
     yt.on("error", (err) => {
-        console.log("❌ PROCESS ERROR:", err);
+        console.log("❌ SPAWN ERROR:", err);
 
         return res.json({
             success: false,
@@ -105,7 +113,8 @@ app.post("/download", (req, res) => {
 
     yt.on("close", () => {
 
-        // 🔥 IMPORTANT: attendre écriture disque Render
+        console.log("⏳ DOWNLOAD TERMINÉ");
+
         setTimeout(() => {
 
             try {
@@ -119,28 +128,22 @@ app.post("/download", (req, res) => {
                     });
                 }
 
-                const sorted = files
-                    .map(name => {
-                        const fullPath = path.join(downloadsPath, name);
-                        const stats = fs.statSync(fullPath);
-
+                const lastFile = files
+                    .map(file => {
+                        const full = path.join(downloadsPath, file);
                         return {
-                            name,
-                            time: stats.mtime.getTime()
+                            name: file,
+                            time: fs.statSync(full).mtime.getTime()
                         };
                     })
-                    .sort((a, b) => b.time - a.time);
-
-                const lastFile = sorted[0].name;
+                    .sort((a, b) => b.time - a.time)[0].name;
 
                 const filePath = path.join(downloadsPath, lastFile);
                 const stats = fs.statSync(filePath);
 
-                const sizeMB = (stats.size / (1024 * 1024)).toFixed(2);
-
                 const item = {
                     name: lastFile,
-                    size: sizeMB + " MB",
+                    size: (stats.size / 1024 / 1024).toFixed(2) + " MB",
                     date: new Date().toLocaleString(),
                     url:
                         req.protocol +
@@ -152,7 +155,7 @@ app.post("/download", (req, res) => {
 
                 history.push(item);
 
-                console.log("✅ DOWNLOAD OK :", item.name);
+                console.log("✅ SUCCESS:", item.name);
 
                 return res.json({
                     success: true,
@@ -161,6 +164,7 @@ app.post("/download", (req, res) => {
                 });
 
             } catch (err) {
+
                 console.log("READ ERROR:", err);
 
                 return res.json({
@@ -169,14 +173,14 @@ app.post("/download", (req, res) => {
                 });
             }
 
-        }, 3500); // 🔥 FIX RENDER DELAY
+        }, 5000);
 
     });
 
 });
 
 /* =========================================
-   HISTORY
+   HISTORY ROUTE
 ========================================= */
 
 app.get("/history", (req, res) => {
@@ -193,62 +197,21 @@ app.post("/delete", (req, res) => {
 
     const filePath = path.join(downloadsPath, name);
 
-    try {
-
-        if (fs.existsSync(filePath)) {
-            fs.unlinkSync(filePath);
-
-            history = history.filter(
-                item => item.name !== name
-            );
-
-            return res.json({
-                success: true,
-                message: "Vidéo supprimée ✔"
-            });
-        }
-
+    if (!fs.existsSync(filePath)) {
         return res.json({
             success: false,
             message: "Fichier introuvable ❌"
         });
-
-    } catch (err) {
-        console.log(err);
-
-        return res.json({
-            success: false,
-            message: "Erreur suppression ❌"
-        });
     }
 
-});
+    fs.unlinkSync(filePath);
 
-/* =========================================
-   OPEN FOLDER
-========================================= */
+    history = history.filter(item => item.name !== name);
 
-app.get("/open-folder", (req, res) => {
-
-    try {
-
-        if (process.platform === "win32") {
-            exec(`start "" "${downloadsPath}"`);
-        }
-
-        res.json({
-            success: true,
-            message: "Dossier ouvert ✔"
-        });
-
-    } catch (err) {
-
-        res.json({
-            success: false,
-            message: "Erreur dossier ❌"
-        });
-    }
-
+    res.json({
+        success: true,
+        message: "Vidéo supprimée ✔"
+    });
 });
 
 /* =========================================
@@ -258,5 +221,5 @@ app.get("/open-folder", (req, res) => {
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-    console.log("🚀 AssaneDown actif sur port " + PORT);
+    console.log("🚀 ASSANEDOWN RUNNING ON PORT", PORT);
 });

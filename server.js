@@ -21,59 +21,72 @@ app.get("/", (req, res) => {
 <html>
 <head>
 <meta charset="UTF-8">
-<title>AssaneDown</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Downloader</title>
 
 <style>
 body{
   margin:0;
   font-family:Arial;
-  background:#0f172a;
+  background:#0b1220;
   color:white;
   text-align:center;
 }
 
+/* HEADER */
 header{
-  background:#020617;
+  background:#111827;
   padding:15px;
-  border-bottom:3px solid #00b894;
+  border-bottom:2px solid #22c55e;
 }
 
+/* INPUT */
 textarea{
-  width:80%;
-  height:90px;
-  margin-top:20px;
+  width:90%;
+  height:80px;
+  margin-top:15px;
   padding:10px;
-  border:none;
   border-radius:10px;
+  border:none;
+  outline:none;
 }
 
+/* BUTTONS */
 button{
-  padding:12px 15px;
+  padding:12px;
   margin:5px;
   border:none;
   border-radius:10px;
-  cursor:pointer;
+  font-size:14px;
 }
 
-.download{background:#00b894;color:white}
+.download{background:#22c55e;color:white}
 .paste{background:#3b82f6;color:white}
 .clear{background:#ef4444;color:white}
 .save{background:#f59e0b;color:white}
-.ai{background:#8b5cf6;color:white}
 
+/* CARD */
 .card{
   background:#111827;
-  margin:15px;
-  padding:15px;
+  margin:10px;
+  padding:10px;
   border-radius:10px;
+  text-align:left;
 }
 
+/* HISTORY */
 .history-item{
-  background:#1e293b;
-  margin:5px;
+  background:#1f2937;
   padding:8px;
+  margin:5px 0;
   border-radius:8px;
   word-break:break-all;
+}
+
+/* TOGGLE */
+.toggle{
+  background:#8b5cf6;
+  color:white;
 }
 </style>
 
@@ -82,81 +95,78 @@ button{
 <body>
 
 <header>
-<h1>🚀 AssaneDown 🇸🇳</h1>
-<p>Créé par Assane Moussa Goudiaby</p>
+<h2>📥 Video Downloader</h2>
 </header>
-
-<h3>📥 Téléchargeur Vidéo</h3>
 
 <textarea id="url" placeholder="Colle ton lien ici..."></textarea>
 
 <br>
 
-<!-- BOUTONS -->
 <button class="paste" onclick="paste()">📋 Coller</button>
 <button class="clear" onclick="clearText()">❌ Effacer</button>
 <button class="download" onclick="download()">⬇ Télécharger</button>
-<button class="save" onclick="save()">💾 Enregistrer</button>
-<button class="ai" onclick="ai()">🤖 IA Assane</button>
+<button class="save" onclick="save()">💾 Sauver</button>
 
-<!-- INFOS VIDEO -->
 <div class="card">
-<h3>📊 Informations vidéo</h3>
-<p id="info">Aucune vidéo sélectionnée</p>
+<h3>📊 Infos</h3>
+<p id="info">Aucune vidéo</p>
 </div>
 
-<!-- HISTORIQUE -->
 <div class="card">
-<h3>📜 Historique téléchargements</h3>
+<h3>
+📜 Historique 
+<button class="toggle" onclick="toggleHistory()">Masquer/Afficher</button>
+</h3>
 <div id="history"></div>
 </div>
 
 <script>
 
-// 📋 COLLER
+let historyVisible = true;
+
+/* COLLER */
 async function paste(){
   const text = await navigator.clipboard.readText();
   document.getElementById("url").value = text;
 }
 
-// ❌ EFFACER
+/* EFFACER */
 function clearText(){
   document.getElementById("url").value = "";
 }
 
-// 💾 ENREGISTRER
+/* SAUVER */
 function save(){
   const url = document.getElementById("url").value;
-  if(!url) return alert("Rien à enregistrer");
-
-  localStorage.setItem("saved_url", url);
-  alert("Lien enregistré");
+  if(!url) return alert("Vide");
+  localStorage.setItem("saved", url);
+  alert("Sauvé");
 }
 
-// ⬇ DOWNLOAD
+/* DOWNLOAD */
 function download(){
   const url = document.getElementById("url").value;
-  if(!url) return alert("Lien manquant");
+  if(!url) return alert("Lien vide");
 
   addHistory(url);
-  window.location.href = "/download?url=" + encodeURIComponent(url);
-
   getInfo(url);
+
+  window.location.href = "/download?url=" + encodeURIComponent(url);
 }
 
-// 📊 INFO VIDEO
+/* INFO */
 function getInfo(url){
   fetch("/info?url=" + encodeURIComponent(url))
-  .then(r => r.json())
-  .then(data => {
+  .then(r=>r.json())
+  .then(data=>{
     document.getElementById("info").innerHTML =
-    "Titre: " + (data.title || "inconnu") + "<br>" +
-    "Durée: " + (data.duration || "inconnu") + "<br>" +
-    "Taille: " + (data.size || "inconnue");
+      "Titre: " + (data.title || "-") + "<br>" +
+      "Durée: " + (data.duration || "-") + " sec<br>" +
+      "Taille: " + (data.size || "-");
   });
 }
 
-// 📜 HISTORIQUE
+/* HISTORY */
 function addHistory(url){
   let h = JSON.parse(localStorage.getItem("history") || "[]");
   h.unshift(url);
@@ -168,14 +178,17 @@ function renderHistory(){
   let h = JSON.parse(localStorage.getItem("history") || "[]");
   let div = document.getElementById("history");
   div.innerHTML = "";
+
   h.forEach(v=>{
-    div.innerHTML += "<div class='history-item'>"+v+"</div>";
+    div.innerHTML += "<div class='history-item'>" + v + "</div>";
   });
 }
 
-// 🤖 IA ASSANE
-function ai(){
-  alert("🤖 IA Assane : colle un lien vidéo, puis clique Télécharger pour récupérer la vidéo.");
+/* TOGGLE HISTORY */
+function toggleHistory(){
+  historyVisible = !historyVisible;
+  document.getElementById("history").style.display =
+    historyVisible ? "block" : "none";
 }
 
 renderHistory();
@@ -187,7 +200,7 @@ renderHistory();
   `);
 });
 
-/* ===================== INFO VIDEO ===================== */
+/* ===================== INFO ===================== */
 app.get("/info", (req, res) => {
   const url = req.query.url;
   if (!url) return res.json({ error: "no url" });
@@ -218,11 +231,10 @@ app.get("/download", (req, res) => {
   const fileName = `video_${Date.now()}.mp4`;
   const outputPath = path.join(downloadsPath, fileName);
 
-  const cmd =
-    `yt-dlp -f "bv*+ba/b" --merge-output-format mp4 -o "${outputPath}" "${url}"`;
+  const cmd = `yt-dlp -f "bv*+ba/b" --merge-output-format mp4 -o "${outputPath}" "${url}"`;
 
   exec(cmd, (err) => {
-    if (err) return res.status(500).send("Erreur téléchargement");
+    if (err) return res.status(500).send("Erreur download");
 
     res.download(outputPath, fileName, () => {
       fs.unlink(outputPath, () => {});
@@ -232,5 +244,5 @@ app.get("/download", (req, res) => {
 
 /* ===================== START ===================== */
 app.listen(PORT, () => {
-  console.log("🚀 AssaneDown running on port " + PORT);
+  console.log("🚀 Server running on " + PORT);
 });

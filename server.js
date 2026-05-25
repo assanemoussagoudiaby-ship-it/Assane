@@ -5,131 +5,232 @@ const fs = require("fs");
 const path = require("path");
 
 const app = express();
-
 app.use(cors());
-app.use(express.json());
 
 const PORT = process.env.PORT || 10000;
 
-// 📁 Dossier downloads
 const downloadsPath = path.join(__dirname, "downloads");
-
 if (!fs.existsSync(downloadsPath)) {
   fs.mkdirSync(downloadsPath);
 }
 
-// 🏠 PAGE PRINCIPALE
+/* ===================== HOME ===================== */
 app.get("/", (req, res) => {
   res.send(`
-    <html>
-      <head>
-        <title>AssaneDown</title>
-        <style>
-          body{
-            background:#0f172a;
-            color:white;
-            font-family:Arial;
-            text-align:center;
-            padding-top:100px;
-          }
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>AssaneDown</title>
 
-          input{
-            width:80%;
-            max-width:500px;
-            padding:15px;
-            border:none;
-            border-radius:10px;
-            margin-top:20px;
-          }
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0f172a;
+  color:white;
+  text-align:center;
+}
 
-          button{
-            padding:15px 30px;
-            border:none;
-            border-radius:10px;
-            background:#00b894;
-            color:white;
-            font-size:18px;
-            cursor:pointer;
-            margin-top:20px;
-          }
+header{
+  background:#020617;
+  padding:15px;
+  border-bottom:3px solid #00b894;
+}
 
-          button:hover{
-            background:#00a383;
-          }
-        </style>
-      </head>
+textarea{
+  width:80%;
+  height:90px;
+  margin-top:20px;
+  padding:10px;
+  border:none;
+  border-radius:10px;
+}
 
-      <body>
-        <h1>🚀 AssaneDown</h1>
-        <p>Téléchargeur Vidéo YouTube • TikTok • Facebook</p>
+button{
+  padding:12px 15px;
+  margin:5px;
+  border:none;
+  border-radius:10px;
+  cursor:pointer;
+}
 
-        <input type="text" id="url" placeholder="Colle le lien vidéo ici">
+.download{background:#00b894;color:white}
+.paste{background:#3b82f6;color:white}
+.clear{background:#ef4444;color:white}
+.save{background:#f59e0b;color:white}
+.ai{background:#8b5cf6;color:white}
 
-        <br>
+.card{
+  background:#111827;
+  margin:15px;
+  padding:15px;
+  border-radius:10px;
+}
 
-        <button onclick="downloadVideo()">
-          Télécharger
-        </button>
+.history-item{
+  background:#1e293b;
+  margin:5px;
+  padding:8px;
+  border-radius:8px;
+  word-break:break-all;
+}
+</style>
 
-        <script>
-          function downloadVideo() {
-            const url = document.getElementById("url").value;
+</head>
 
-            if(!url){
-              alert("Entre un lien vidéo");
-              return;
-            }
+<body>
 
-            window.location.href =
-              "/download?url=" + encodeURIComponent(url);
-          }
-        </script>
-      </body>
-    </html>
+<header>
+<h1>🚀 AssaneDown 🇸🇳</h1>
+<p>Créé par Assane Moussa Goudiaby</p>
+</header>
+
+<h3>📥 Téléchargeur Vidéo</h3>
+
+<textarea id="url" placeholder="Colle ton lien ici..."></textarea>
+
+<br>
+
+<!-- BOUTONS -->
+<button class="paste" onclick="paste()">📋 Coller</button>
+<button class="clear" onclick="clearText()">❌ Effacer</button>
+<button class="download" onclick="download()">⬇ Télécharger</button>
+<button class="save" onclick="save()">💾 Enregistrer</button>
+<button class="ai" onclick="ai()">🤖 IA Assane</button>
+
+<!-- INFOS VIDEO -->
+<div class="card">
+<h3>📊 Informations vidéo</h3>
+<p id="info">Aucune vidéo sélectionnée</p>
+</div>
+
+<!-- HISTORIQUE -->
+<div class="card">
+<h3>📜 Historique téléchargements</h3>
+<div id="history"></div>
+</div>
+
+<script>
+
+// 📋 COLLER
+async function paste(){
+  const text = await navigator.clipboard.readText();
+  document.getElementById("url").value = text;
+}
+
+// ❌ EFFACER
+function clearText(){
+  document.getElementById("url").value = "";
+}
+
+// 💾 ENREGISTRER
+function save(){
+  const url = document.getElementById("url").value;
+  if(!url) return alert("Rien à enregistrer");
+
+  localStorage.setItem("saved_url", url);
+  alert("Lien enregistré");
+}
+
+// ⬇ DOWNLOAD
+function download(){
+  const url = document.getElementById("url").value;
+  if(!url) return alert("Lien manquant");
+
+  addHistory(url);
+  window.location.href = "/download?url=" + encodeURIComponent(url);
+
+  getInfo(url);
+}
+
+// 📊 INFO VIDEO
+function getInfo(url){
+  fetch("/info?url=" + encodeURIComponent(url))
+  .then(r => r.json())
+  .then(data => {
+    document.getElementById("info").innerHTML =
+    "Titre: " + (data.title || "inconnu") + "<br>" +
+    "Durée: " + (data.duration || "inconnu") + "<br>" +
+    "Taille: " + (data.size || "inconnue");
+  });
+}
+
+// 📜 HISTORIQUE
+function addHistory(url){
+  let h = JSON.parse(localStorage.getItem("history") || "[]");
+  h.unshift(url);
+  localStorage.setItem("history", JSON.stringify(h));
+  renderHistory();
+}
+
+function renderHistory(){
+  let h = JSON.parse(localStorage.getItem("history") || "[]");
+  let div = document.getElementById("history");
+  div.innerHTML = "";
+  h.forEach(v=>{
+    div.innerHTML += "<div class='history-item'>"+v+"</div>";
+  });
+}
+
+// 🤖 IA ASSANE
+function ai(){
+  alert("🤖 IA Assane : colle un lien vidéo, puis clique Télécharger pour récupérer la vidéo.");
+}
+
+renderHistory();
+
+</script>
+
+</body>
+</html>
   `);
 });
 
-// 🚀 ROUTE DE TÉLÉCHARGEMENT
-app.get("/download", (req, res) => {
-  const videoUrl = req.query.url;
+/* ===================== INFO VIDEO ===================== */
+app.get("/info", (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.json({ error: "no url" });
 
-  if (!videoUrl) {
-    return res.status(400).send("Lien vidéo manquant");
-  }
+  exec(`yt-dlp -j "${url}"`, (err, stdout) => {
+    if (err) return res.json({ error: "yt-dlp error" });
+
+    try {
+      const data = JSON.parse(stdout);
+
+      res.json({
+        title: data.title,
+        duration: data.duration,
+        size: data.filesize || "inconnue"
+      });
+
+    } catch {
+      res.json({ error: "parse error" });
+    }
+  });
+});
+
+/* ===================== DOWNLOAD ===================== */
+app.get("/download", (req, res) => {
+  const url = req.query.url;
+  if (!url) return res.status(400).send("Lien manquant");
 
   const fileName = `video_${Date.now()}.mp4`;
-
   const outputPath = path.join(downloadsPath, fileName);
 
-  // 🔥 Commande yt-dlp
-  const command = `yt-dlp -f mp4 -o "${outputPath}" "${videoUrl}"`;
+  const cmd =
+    `yt-dlp -f "bv*+ba/b" --merge-output-format mp4 -o "${outputPath}" "${url}"`;
 
-  console.log("Téléchargement en cours...");
+  exec(cmd, (err) => {
+    if (err) return res.status(500).send("Erreur téléchargement");
 
-  exec(command, (error) => {
-
-    if (error) {
-      console.log(error);
-
-      return res.status(500).send("Erreur téléchargement vidéo");
-    }
-
-    console.log("Téléchargement terminé");
-
-    // 📥 Envoie au navigateur
-    res.download(outputPath, fileName, (err) => {
-
-      // 🧹 Supprime le fichier après téléchargement
+    res.download(outputPath, fileName, () => {
       fs.unlink(outputPath, () => {});
-
-      if (err) {
-        console.log(err);
-      }
     });
   });
 });
 
-// 🚀 SERVEUR
+/* ===================== START ===================== */
 app.listen(PORT, () => {
-  console.log("🚀 ASSANEDOWN RUNNING ON PORT " + PORT);
+  console.log("🚀 AssaneDown running on port " + PORT);
 });

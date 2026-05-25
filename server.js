@@ -1,225 +1,135 @@
-
 const express = require("express");
 const cors = require("cors");
-const path = require("path");
+const { exec } = require("child_process");
 const fs = require("fs");
-const { spawn } = require("child_process");
+const path = require("path");
 
 const app = express();
 
-/* =========================================
-   CORS FIX GLOBAL
-========================================= */
-
-app.use((req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "*");
-    res.header("Access-Control-Allow-Methods", "*");
-    next();
-});
-
-/* =========================================
-   CONFIG
-========================================= */
-
+app.use(cors());
 app.use(express.json());
-app.use(express.static(__dirname));
 
-/* =========================================
-   DOWNLOADS FOLDER
-========================================= */
+const PORT = process.env.PORT || 10000;
 
+// 📁 Dossier downloads
 const downloadsPath = path.join(__dirname, "downloads");
 
 if (!fs.existsSync(downloadsPath)) {
-    fs.mkdirSync(downloadsPath);
+  fs.mkdirSync(downloadsPath);
 }
 
-app.use("/downloads", express.static(downloadsPath));
-
-/* =========================================
-   HISTORY
-========================================= */
-
-let history = [];
-
-/* =========================================
-   HEALTH CHECK
-========================================= */
-
-app.get("/health", (req, res) => {
-    res.json({ status: "OK" });
-});
-
-/* =========================================
-   HOME
-========================================= */
-
+// 🏠 PAGE PRINCIPALE
 app.get("/", (req, res) => {
-    res.sendFile(path.join(__dirname, "index.html"));
-});
+  res.send(`
+    <html>
+      <head>
+        <title>AssaneDown</title>
+        <style>
+          body{
+            background:#0f172a;
+            color:white;
+            font-family:Arial;
+            text-align:center;
+            padding-top:100px;
+          }
 
-/* =========================================
-   DOWNLOAD (FIX FINAL STABLE RENDER)
-========================================= */
+          input{
+            width:80%;
+            max-width:500px;
+            padding:15px;
+            border:none;
+            border-radius:10px;
+            margin-top:20px;
+          }
 
-app.post("/download", (req, res) => {
+          button{
+            padding:15px 30px;
+            border:none;
+            border-radius:10px;
+            background:#00b894;
+            color:white;
+            font-size:18px;
+            cursor:pointer;
+            margin-top:20px;
+          }
 
-    const url = req.body.url;
+          button:hover{
+            background:#00a383;
+          }
+        </style>
+      </head>
 
-    console.log("📥 VIDEO:", url);
+      <body>
+        <h1>🚀 AssaneDown</h1>
+        <p>Téléchargeur Vidéo YouTube • TikTok • Facebook</p>
 
-    if (!url || !url.startsWith("http")) {
-        return res.json({
-            success: false,
-            message: "Lien invalide ❌"
-        });
-    }
+        <input type="text" id="url" placeholder="Colle le lien vidéo ici">
 
-    const outputTemplate = path.join(
-        downloadsPath,
-        "%(title)s.%(ext)s"
-    );
+        <br>
 
-    /* =====================================
-       🔥 IMPORTANT FIX RENDER
-    ===================================== */
+        <button onclick="downloadVideo()">
+          Télécharger
+        </button>
 
-    const yt = spawn("python3", [
-        "-m",
-        "yt_dlp",
-        "-f",
-        "best",
-        "-o",
-        outputTemplate,
-        url
-    ]);
+        <script>
+          function downloadVideo() {
+            const url = document.getElementById("url").value;
 
-    let errorLog = "";
-
-    yt.stderr.on("data", (data) => {
-        errorLog += data.toString();
-        console.log("YT-DLP:", data.toString());
-    });
-
-    yt.on("error", (err) => {
-        console.log("❌ SPAWN ERROR:", err);
-
-        return res.json({
-            success: false,
-            message: "yt-dlp introuvable sur le serveur ❌"
-        });
-    });
-
-    yt.on("close", () => {
-
-        console.log("⏳ DOWNLOAD TERMINÉ");
-
-        setTimeout(() => {
-
-            try {
-
-                const files = fs.readdirSync(downloadsPath);
-
-                if (!files.length) {
-                    return res.json({
-                        success: false,
-                        message: "Aucune vidéo trouvée ❌"
-                    });
-                }
-
-                const lastFile = files
-                    .map(file => {
-                        const full = path.join(downloadsPath, file);
-                        return {
-                            name: file,
-                            time: fs.statSync(full).mtime.getTime()
-                        };
-                    })
-                    .sort((a, b) => b.time - a.time)[0].name;
-
-                const filePath = path.join(downloadsPath, lastFile);
-                const stats = fs.statSync(filePath);
-
-                const item = {
-                    name: lastFile,
-                    size: (stats.size / 1024 / 1024).toFixed(2) + " MB",
-                    date: new Date().toLocaleString(),
-                    url:
-                        req.protocol +
-                        "://" +
-                        req.get("host") +
-                        "/downloads/" +
-                        encodeURIComponent(lastFile)
-                };
-
-                history.push(item);
-
-                console.log("✅ SUCCESS:", item.name);
-
-                return res.json({
-                    success: true,
-                    message: "Vidéo téléchargée ✔",
-                    file: item
-                });
-
-            } catch (err) {
-
-                console.log("READ ERROR:", err);
-
-                return res.json({
-                    success: false,
-                    message: "Erreur lecture fichier ❌"
-                });
+            if(!url){
+              alert("Entre un lien vidéo");
+              return;
             }
 
-        }, 5000);
-
-    });
-
+            window.location.href =
+              "/download?url=" + encodeURIComponent(url);
+          }
+        </script>
+      </body>
+    </html>
+  `);
 });
 
-/* =========================================
-   HISTORY ROUTE
-========================================= */
+// 🚀 ROUTE DE TÉLÉCHARGEMENT
+app.get("/download", (req, res) => {
+  const videoUrl = req.query.url;
 
-app.get("/history", (req, res) => {
-    res.json(history);
-});
+  if (!videoUrl) {
+    return res.status(400).send("Lien vidéo manquant");
+  }
 
-/* =========================================
-   DELETE VIDEO
-========================================= */
+  const fileName = `video_${Date.now()}.mp4`;
 
-app.post("/delete", (req, res) => {
+  const outputPath = path.join(downloadsPath, fileName);
 
-    const { name } = req.body;
+  // 🔥 Commande yt-dlp
+  const command = `yt-dlp -f mp4 -o "${outputPath}" "${videoUrl}"`;
 
-    const filePath = path.join(downloadsPath, name);
+  console.log("Téléchargement en cours...");
 
-    if (!fs.existsSync(filePath)) {
-        return res.json({
-            success: false,
-            message: "Fichier introuvable ❌"
-        });
+  exec(command, (error) => {
+
+    if (error) {
+      console.log(error);
+
+      return res.status(500).send("Erreur téléchargement vidéo");
     }
 
-    fs.unlinkSync(filePath);
+    console.log("Téléchargement terminé");
 
-    history = history.filter(item => item.name !== name);
+    // 📥 Envoie au navigateur
+    res.download(outputPath, fileName, (err) => {
 
-    res.json({
-        success: true,
-        message: "Vidéo supprimée ✔"
+      // 🧹 Supprime le fichier après téléchargement
+      fs.unlink(outputPath, () => {});
+
+      if (err) {
+        console.log(err);
+      }
     });
+  });
 });
 
-/* =========================================
-   START SERVER
-========================================= */
-
-const PORT = process.env.PORT || 3000;
-
+// 🚀 SERVEUR
 app.listen(PORT, () => {
-    console.log("🚀 ASSANEDOWN RUNNING ON PORT", PORT);
+  console.log("🚀 ASSANEDOWN RUNNING ON PORT " + PORT);
 });

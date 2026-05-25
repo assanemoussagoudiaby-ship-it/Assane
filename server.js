@@ -9,6 +9,7 @@ app.use(cors());
 
 const PORT = process.env.PORT || 10000;
 
+/* ===================== DOWNLOADS FOLDER ===================== */
 const downloadsPath = path.join(__dirname, "downloads");
 if (!fs.existsSync(downloadsPath)) {
   fs.mkdirSync(downloadsPath);
@@ -22,7 +23,7 @@ app.get("/", (req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Downloader</title>
+<title>Downloader App</title>
 
 <style>
 body{
@@ -49,6 +50,7 @@ textarea{
   border-radius:10px;
   border:none;
   outline:none;
+  font-size:14px;
 }
 
 /* BUTTONS */
@@ -58,12 +60,15 @@ button{
   border:none;
   border-radius:10px;
   font-size:14px;
+  cursor:pointer;
 }
 
 .download{background:#22c55e;color:white}
 .paste{background:#3b82f6;color:white}
 .clear{background:#ef4444;color:white}
 .save{background:#f59e0b;color:white}
+.ai{background:#8b5cf6;color:white}
+.about{background:#06b6d4;color:white}
 
 /* CARD */
 .card{
@@ -106,15 +111,17 @@ button{
 <button class="clear" onclick="clearText()">❌ Effacer</button>
 <button class="download" onclick="download()">⬇ Télécharger</button>
 <button class="save" onclick="save()">💾 Sauver</button>
+<button class="ai" onclick="askAI()">🤖 IA Assane</button>
+<button class="about" onclick="about()">ℹ À propos</button>
 
 <div class="card">
-<h3>📊 Infos</h3>
-<p id="info">Aucune vidéo</p>
+<h3>📊 Infos vidéo</h3>
+<p id="info">Aucune vidéo sélectionnée</p>
 </div>
 
 <div class="card">
 <h3>
-📜 Historique 
+📜 Historique
 <button class="toggle" onclick="toggleHistory()">Masquer/Afficher</button>
 </h3>
 <div id="history"></div>
@@ -138,15 +145,15 @@ function clearText(){
 /* SAUVER */
 function save(){
   const url = document.getElementById("url").value;
-  if(!url) return alert("Vide");
+  if(!url) return alert("Lien vide");
   localStorage.setItem("saved", url);
-  alert("Sauvé");
+  alert("Lien sauvegardé");
 }
 
 /* DOWNLOAD */
 function download(){
   const url = document.getElementById("url").value;
-  if(!url) return alert("Lien vide");
+  if(!url) return alert("Lien manquant");
 
   addHistory(url);
   getInfo(url);
@@ -154,7 +161,7 @@ function download(){
   window.location.href = "/download?url=" + encodeURIComponent(url);
 }
 
-/* INFO */
+/* INFO VIDEO */
 function getInfo(url){
   fetch("/info?url=" + encodeURIComponent(url))
   .then(r=>r.json())
@@ -191,6 +198,32 @@ function toggleHistory(){
     historyVisible ? "block" : "none";
 }
 
+/* 🤖 IA ASSANE */
+function askAI(){
+  const q = prompt("Pose ta question à IA Assane 🤖");
+  if(!q) return;
+
+  fetch("/ai?q=" + encodeURIComponent(q))
+  .then(r=>r.json())
+  .then(data=>{
+    alert("🤖 Assane AI : " + data.reply);
+  });
+}
+
+/* ℹ ABOUT */
+function about(){
+  fetch("/about")
+  .then(r=>r.json())
+  .then(data=>{
+    alert(
+      "📱 " + data.app +
+      "\\n\\nℹ " + data.description +
+      "\\n\\n👤 Créateur : " + data.creator +
+      "\\n\\n⚙ Fonctionnalités : " + data.features.join(", ")
+    );
+  });
+}
+
 renderHistory();
 
 </script>
@@ -200,7 +233,7 @@ renderHistory();
   `);
 });
 
-/* ===================== INFO ===================== */
+/* ===================== INFO VIDEO ===================== */
 app.get("/info", (req, res) => {
   const url = req.query.url;
   if (!url) return res.json({ error: "no url" });
@@ -234,7 +267,7 @@ app.get("/download", (req, res) => {
   const cmd = `yt-dlp -f "bv*+ba/b" --merge-output-format mp4 -o "${outputPath}" "${url}"`;
 
   exec(cmd, (err) => {
-    if (err) return res.status(500).send("Erreur download");
+    if (err) return res.status(500).send("Erreur téléchargement");
 
     res.download(outputPath, fileName, () => {
       fs.unlink(outputPath, () => {});
@@ -242,7 +275,42 @@ app.get("/download", (req, res) => {
   });
 });
 
-/* ===================== START ===================== */
+/* ===================== IA ASSANE ===================== */
+app.get("/ai", (req, res) => {
+  const q = (req.query.q || "").toLowerCase();
+
+  let reply = "Je suis IA Assane 🤖. Colle un lien et télécharge.";
+
+  if (q.includes("comment")) {
+    reply = "Colle un lien vidéo puis clique Télécharger.";
+  } else if (q.includes("erreur")) {
+    reply = "Vérifie ton lien ou réessaie.";
+  } else if (q.includes("historique")) {
+    reply = "L'historique affiche tes anciens téléchargements.";
+  } else if (q.includes("serveur")) {
+    reply = "Le serveur permet de télécharger des vidéos via yt-dlp.";
+  }
+
+  res.json({ reply });
+});
+
+/* ===================== ABOUT ===================== */
+app.get("/about", (req, res) => {
+  res.json({
+    app: "Video Downloader App",
+    description: "Application web pour télécharger des vidéos (YouTube, etc.) avec yt-dlp.",
+    creator: "Projet indépendant développé pour apprentissage et usage personnel",
+    features: [
+      "Téléchargement vidéo",
+      "Infos vidéo",
+      "Historique local",
+      "IA d'assistance",
+      "Interface mobile"
+    ]
+  });
+});
+
+/* ===================== START SERVER ===================== */
 app.listen(PORT, () => {
-  console.log("🚀 Server running on " + PORT);
+  console.log("🚀 Server running on port " + PORT);
 });
